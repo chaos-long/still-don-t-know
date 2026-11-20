@@ -23,11 +23,11 @@ export default {
         <div class="learning-steps">
           <article class="learning-step"><span class="step-number">01</span><div><h3>Chọn một bài thực hành</h3><p>Chọn chủ đề bạn muốn khám phá từ những tình huống quen thuộc trên mạng.</p></div></article>
           <article class="learning-step"><span class="step-number">02</span><div><h3>Đọc và tìm cách giải quyết</h3><p>Quan sát các chi tiết, suy nghĩ và thử tìm cách xử lý tình huống.</p></div></article>
-          <article class="learning-step"><span class="step-number">03</span><div><h3>Tìm và nhập flag</h3><p>Trong các bài thử thách sau này, tìm và nhập flag để hoàn thành bài.</p></div></article>
+          <article class="learning-step"><span class="step-number">03</span><div><h3>Chọn cách xử lý phù hợp</h3><p>Tương tác với tình huống và hoàn thành bài bằng cách xử lý an toàn.</p></div></article>
         </div>
       </section>
       <aside class="dashboard-side" aria-label="Thông tin cho người mới">
-        <section class="side-panel flag-panel"><div class="side-icon" aria-hidden="true">⚑</div><p class="eyebrow">MỘT KHÁI NIỆM MỚI</p><h2>Flag là gì?</h2><p>Flag là một chuỗi ký tự dùng làm đáp án để xác nhận bạn đã giải được thử thách.</p></section>
+        <section class="side-panel"><div class="side-icon" aria-hidden="true">✓</div><p class="eyebrow">HOÀN THÀNH BÀI TẬP</p><h2>Học qua cách xử lý</h2><p>Đọc kỹ tình huống, tương tác và chọn cách xử lý phù hợp để hoàn thành bài.</p></section>
         <section class="side-panel"><div class="side-icon" aria-hidden="true">✳</div><p class="eyebrow">ĐANG PHÁT TRIỂN</p><h2>Đi từng bước nhé.</h2><p>Bắt đầu với bài “Công An Giả”. Các tình huống và thử thách khác sẽ được bổ sung sau.</p></section>
       </aside>
     </div>

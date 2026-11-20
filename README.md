@@ -19,4 +19,4 @@ Mở địa chỉ được in trong terminal (mặc định `http://127.0.0.1:41
 - `src/assets/`: giao diện và các tương tác chạy trên trình duyệt.
 - `scripts/`: tạo các trang HTML và chạy máy chủ xem thử.
 
-Trạng thái bài tập được lưu trên cùng trình duyệt bằng localStorage, không đồng bộ giữa các thiết bị. Tin nhắn và ảnh trong bài mô phỏng không được gửi tới máy chủ hay lưu lâu dài. Các bài và chủ đề còn lại là nội dung minh họa; chưa có đăng nhập hay chức năng kiểm tra flag.
+Trạng thái bài tập được lưu trên cùng trình duyệt bằng localStorage, không đồng bộ giữa các thiết bị. Tin nhắn và ảnh trong bài mô phỏng không được gửi tới máy chủ hay lưu lâu dài. Người học hoàn thành bài bằng cách xử lý phù hợp trong tình huống. Các bài và chủ đề còn lại là nội dung minh họa; chưa có đăng nhập.

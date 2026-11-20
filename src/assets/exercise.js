@@ -3,7 +3,6 @@
   if (!app) return;
 
   const storageKey = 'lab-an-toan-so:exercise:cong-an-gia';
-  const flag = 'ATKGM{C4n_1h4n_v01_N9u0i_l4_1r3n_0_G14n_m4n9}';
   const warning = 'Công an sẽ không làm việc với công dân bằng các ứng dụng nhắn tin như Zalo, Messenger,... Thay vào đó sẽ liên hệ với các công dân cần thiết bằng văn bản gửi đến địa phương. Do vậy không được gửi thông tin cá nhân cho người lạ đột nhiên nhắn tin nhận là công an.';
   const $ = selector => app.querySelector(selector);
   const intro = $('#exercise-intro');
@@ -94,41 +93,11 @@
     const success = kind === 'success';
     dialogIcon.textContent = success ? '✓' : '!';
     dialogIcon.classList.toggle('success', success);
-    dialogTitle.textContent = success ? 'Bạn đã vượt qua thử thách!' : 'Dừng lại và kiểm tra';
-    dialogDescription.textContent = success ? 'Chúc mừng bạn đã vượt qua thử thách, flag là' : warning;
+    dialogTitle.textContent = success ? 'Chúc mừng bạn đã hoàn thành thử thách!' : 'Dừng lại và kiểm tra';
+    dialogDescription.textContent = success ? '' : warning;
     dialogExtra.replaceChildren();
     dialogActions.replaceChildren();
     if (success) {
-      const label = document.createElement('label');
-      label.className = 'flag-label';
-      label.setAttribute('for', 'success-flag');
-      label.textContent = 'Flag của bạn';
-      const flagRow = document.createElement('div');
-      flagRow.className = 'flag-row';
-      const flagInput = document.createElement('input');
-      flagInput.id = 'success-flag';
-      flagInput.value = flag;
-      flagInput.readOnly = true;
-      const copy = document.createElement('button');
-      copy.type = 'button';
-      copy.className = 'copy-flag';
-      copy.textContent = 'Sao chép';
-      const copyStatus = document.createElement('p');
-      copyStatus.className = 'copy-status';
-      copyStatus.setAttribute('role', 'status');
-      copy.addEventListener('click', async () => {
-        try {
-          if (!navigator.clipboard) throw new Error('clipboard unavailable');
-          await navigator.clipboard.writeText(flag);
-          copyStatus.textContent = 'Đã sao chép flag.';
-        } catch {
-          flagInput.focus();
-          flagInput.select();
-          copyStatus.textContent = 'Flag đã được chọn. Bạn có thể sao chép bằng bàn phím.';
-        }
-      });
-      flagRow.append(flagInput, copy);
-      dialogExtra.append(label, flagRow, copyStatus);
       const retry = document.createElement('button');
       retry.type = 'button';
       retry.className = 'button button-primary';
