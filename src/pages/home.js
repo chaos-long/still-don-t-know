@@ -28,7 +28,7 @@ export default {
       </section>
       <aside class="dashboard-side" aria-label="Thông tin cho người mới">
         <section class="side-panel flag-panel"><div class="side-icon" aria-hidden="true">⚑</div><p class="eyebrow">MỘT KHÁI NIỆM MỚI</p><h2>Flag là gì?</h2><p>Flag là một chuỗi ký tự dùng làm đáp án để xác nhận bạn đã giải được thử thách.</p></section>
-        <section class="side-panel"><div class="side-icon" aria-hidden="true">✳</div><p class="eyebrow">ĐANG PHÁT TRIỂN</p><h2>Đi từng bước nhé.</h2><p>Các bài tập hiện là nội dung minh họa. Những tình huống và thử thách sẽ được bổ sung sau.</p></section>
+        <section class="side-panel"><div class="side-icon" aria-hidden="true">✳</div><p class="eyebrow">ĐANG PHÁT TRIỂN</p><h2>Đi từng bước nhé.</h2><p>Bắt đầu với bài “Công An Giả”. Các tình huống và thử thách khác sẽ được bổ sung sau.</p></section>
       </aside>
     </div>
     <section class="explore-section wrap" aria-labelledby="explore-title"><div class="section-heading"><div><p class="eyebrow">KHÁM PHÁ LAB</p><h2 id="explore-title">Bạn muốn bắt đầu từ đâu?</h2></div><p>Chọn một khu vực để tìm hiểu thêm về an toàn số.</p></div>
