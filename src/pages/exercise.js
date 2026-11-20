@@ -46,7 +46,7 @@ export default {
         </div>
         <p class="chat-privacy">Tin nhắn và ảnh chỉ được dùng trong mô phỏng trên trình duyệt; nội dung không được gửi đi hoặc lưu lại sau khi rời trang.</p>
       </section>
-      <dialog id="exercise-dialog" class="exercise-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-description">
+      <dialog id="exercise-dialog" class="exercise-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-description dialog-extra">
         <div class="dialog-content"><button class="dialog-close" id="dialog-close" type="button" aria-label="Đóng thông báo">×</button><span class="dialog-icon" id="dialog-icon" aria-hidden="true">!</span><h2 id="dialog-title"></h2><p id="dialog-description"></p><div id="dialog-extra"></div><div class="dialog-actions" id="dialog-actions"></div></div>
       </dialog>
     </div>`

@@ -94,10 +94,29 @@
     dialogIcon.textContent = success ? '✓' : '!';
     dialogIcon.classList.toggle('success', success);
     dialogTitle.textContent = success ? 'Chúc mừng bạn đã hoàn thành thử thách!' : 'Dừng lại và kiểm tra';
-    dialogDescription.textContent = success ? '' : warning;
+    dialogDescription.textContent = success ? 'Bạn đã nhận ra dấu hiệu lừa đảo! Tài khoản này có nhiều điểm đáng ngờ:' : warning;
     dialogExtra.replaceChildren();
     dialogActions.replaceChildren();
     if (success) {
+      const signs = [
+        'Người lạ tự nhận là công an và nói bạn liên quan đến một vụ án.',
+        'Họ yêu cầu bạn giữ bí mật và ở một mình, khiến bạn khó trao đổi với người thân hoặc thầy cô.',
+        'Họ yêu cầu ảnh căn cước và gọi video để “xác minh”.',
+      ];
+      const list = document.createElement('ul');
+      list.className = 'dialog-signs';
+      for (const sign of signs) {
+        const item = document.createElement('li');
+        item.textContent = sign;
+        list.append(item);
+      }
+      const explanation = document.createElement('p');
+      explanation.className = 'dialog-explanation';
+      explanation.textContent = 'Chặn tài khoản giúp bạn ngừng liên lạc và tránh bị gây áp lực hoặc cung cấp thông tin cá nhân.';
+      const advice = document.createElement('p');
+      advice.className = 'dialog-advice';
+      advice.textContent = 'Nếu gặp tình huống tương tự, đừng làm theo yêu cầu của người lạ. Hãy nói với người thân hoặc thầy cô và chủ động liên hệ công an địa phương qua kênh chính thức để xác minh.';
+      dialogExtra.append(list, explanation, advice);
       const retry = document.createElement('button');
       retry.type = 'button';
       retry.className = 'button button-primary';
