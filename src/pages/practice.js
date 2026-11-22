@@ -10,6 +10,14 @@ const exercises = [
   {
     icon: '✉',
     category: 'Chat/Call App',
+    title: 'Tao đây, Minh đây',
+    description: 'Cùng thu xếp phần âm thanh của lớp trước giờ tổng duyệt.',
+    duration: '5–8 phút',
+    href: 'level2.html',
+  },
+  {
+    icon: '✉',
+    category: 'Chat/Call App',
     title: 'Nhận diện tin nhắn lừa đảo',
     description: 'Tập nhận ra những dấu hiệu đáng ngờ trong một tin nhắn trước khi trả lời hay làm theo.',
   },
@@ -66,6 +74,7 @@ export default {
             <p class="card-tag">${escapeHtml(exercise.category)}</p>
             <h3 class="card-title">${escapeHtml(exercise.title)}</h3>
             <p class="card-description">${escapeHtml(exercise.description)}</p>
+            ${exercise.duration ? `<p class="practice-card-note">Thời gian dự kiến: ${escapeHtml(exercise.duration)}</p>` : ''}
             ${exercise.href ? `<a class="practice-card-link" href="${escapeHtml(exercise.href)}">Xem bài thực hành</a>` : '<p class="practice-card-note">Nội dung sẽ được bổ sung sau</p>'}
           </article>
         `).join('')}

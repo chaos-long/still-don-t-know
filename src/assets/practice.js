@@ -7,7 +7,8 @@
 
   // NFD tách dấu thanh; chữ đ cần được thay riêng vì không tách bằng normalize.
   const normalize = value => value.toLocaleLowerCase('vi').normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').trim();
+    .replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
   const update = () => {
     const query = normalize(search.value);
     let visible = 0;

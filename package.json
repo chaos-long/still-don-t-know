@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.js",
-    "dev": "npm run build && node scripts/serve.js"
+    "dev": "npm run build && node scripts/serve.js",
+    "test:browser": "npm run build && node tests/level2.browser.cjs"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  }
 }
