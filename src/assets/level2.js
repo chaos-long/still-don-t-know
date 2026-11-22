@@ -4,6 +4,7 @@
   const key = 'lab-an-toan-so:exercise:level2';
   const intro = app.querySelector('#m2-intro');
   const game = app.querySelector('#m2-game');
+  const inboxBar = app.querySelector('#m2-inbox-bar');
   const shell = app.querySelector('#m2-shell');
   const main = app.querySelector('#m2-main');
   const topbar = app.querySelector('#m2-topbar');
@@ -51,7 +52,7 @@
   function navScreen(screen) { state.screen = screen; save(); render(); main.focus({preventScroll:true}); }
   const button = (action, label, style = 'm2-choice', data = '') => `<button type="button" class="${style}" data-m2="${action}" ${data}>${label}</button>`;
   const heading = (eyebrow, title, desc = '') => `<p class="m2-eyebrow">${eyebrow}</p><h2>${title}</h2>${desc ? `<p class="m2-lead">${desc}</p>` : ''}`;
-  const msg = (who, text, mine = false) => `<div class="m2-message${mine ? ' mine' : ''}"><span class="m2-message-meta">${who}</span><div class="m2-bubble">${text}</div></div>`;
+  const msg = (who, text, mine = false) => `<div class="m2-message${mine ? ' mine' : ''}">${who.startsWith('Minh') ? '<span class="m2-message-avatar" aria-hidden="true">🐧</span>' : ''}<span class="m2-message-meta">${who}</span><div class="m2-bubble">${text}</div></div>`;
   const beat = (id, html, immediate = false) => ({id, html, immediate});
   const request = 'Ê m còn cầm quỹ lớp không? Chuyển giúp t 200k cọc loa với, lát gặp t tính lại.';
   const rehearsal = '16 giờ cô mở hội trường nhé. Nhóm âm thanh nhớ mang loa qua cửa bên hông giúp cô.';
@@ -159,16 +160,45 @@
     vy: ['V', 'Tin nhắn riêng'],
     decline: ['11', 'Nhóm lớp'],
   };
+
+  function replyComposer() {
+    const replies = [];
+    if (!state.askedSong) replies.push(['ask-song', 'M đang tập bài gì?']);
+    if (!state.askedQuote) replies.push(['ask-quote', 'M gửi biên nhận cho t xem.']);
+    if (!state.transferred && !state.chatEvents.includes('decline')) {
+      replies.push(['decline', 'Để lát gặp ở hội trường nha.']);
+    }
+
+    return `<div class="m2-composer"><div data-m2-after-messages>
+      <div class="m2-reply-tools">
+        ${state.transferred ? button('after-transfer', 'Kiểm tra khoản chi', 'm2-tool') : button('wallet', 'Chuyển tiền', 'm2-tool')}
+        ${state.chatEvents.includes('decline') && !state.transferred ? button('continue-decline','Xem nhóm lớp','m2-tool') : ''}
+        ${button('hint', 'Gợi ý', 'm2-tool')}
+      </div>
+      ${state.hint ? `<p class="m2-hint">${state.hint === 1 ? 'Trong lớp, ai là người trực tiếp thuê loa?' : 'Hãy xem tin ghim trong nhóm Văn nghệ 11A2 để biết phân công.'}</p>` : ''}
+      ${replies.length ? `<form class="m2-compose-form">
+        <select class="m2-reply-select" name="reply" aria-label="Câu trả lời cho Minh" required>
+          <option value="" selected disabled>Chọn câu trả lời cho Minh…</option>
+          ${replies.map(([action, label]) => `<option value="${action}">${label}</option>`).join('')}
+        </select>
+        <button class="m2-primary m2-send" type="submit" disabled>Gửi</button>
+      </form>` : ''}
+    </div></div>`;
+  }
+
   function render() {
     clearTimeout(messageTimer);
     intro.hidden = !!state;
     game.hidden = !state;
     if (!state) return;
     const screen = state.screen;
+    const inboxActive = !['lock','result'].includes(screen);
+    app.classList.toggle('m2-inbox-active', inboxActive);
+    inboxBar.hidden = !inboxActive;
     shell.dataset.screen = screen;
     const avatar = conversationAvatars[screen];
     topbar.innerHTML = `<div class="m2-contact">${avatar ? `<span class="m2-avatar" aria-hidden="true">${avatar[0]}</span>` : ''}<div><strong>${names[screen] || 'Điện thoại'}</strong>${avatar ? `<small>${avatar[1]}</small>` : ''}</div></div><span class="m2-tag">MÔ PHỎNG</span>`;
-    nav.hidden = ['lock','result'].includes(screen);
+    nav.hidden = !inboxActive;
     app.querySelectorAll('.m2-nav-button').forEach(el => {
       if (el.dataset.target === mainNavFor(screen)) el.setAttribute('aria-current','page');
       else el.removeAttribute('aria-current');
@@ -202,15 +232,7 @@
         ${messageLog('Tin nhắn với Minh')}
         ${typingIndicator}
         </div>
-        <div class="m2-composer">
-        <p class="m2-small">Trả lời Minh</p><div data-m2-after-messages><div class="m2-replies">
-        ${!state.askedSong ? button('ask-song','M đang tập bài gì?') : ''}
-        ${!state.askedQuote ? button('ask-quote','M gửi biên nhận cho t xem.') : ''}
-        ${!state.transferred ? (state.chatEvents.includes('decline') ? button('continue-decline','Xem nhóm lớp') : button('decline','Để lát gặp ở hội trường nha.')) : ''}
-        ${!state.transferred ? button('wallet','Chuyển tiền','m2-primary') : button('after-transfer','Kiểm tra khoản chi','m2-primary')}
-        ${button('hint','Gợi ý','m2-tool')}
-        </div>${state.hint ? `<p class="m2-hint">${state.hint === 1 ? 'Trong lớp, ai là người trực tiếp thuê loa?' : 'Hãy xem tin ghim trong nhóm Văn nghệ 11A2 để biết phân công.'}</p>` : ''}
-        </div></div></div>`;
+        ${replyComposer()}</div>`;
     }
     if (screen === 'group') {
       if (state.groupWarned) messages.push(...warningBeats(false));
@@ -344,9 +366,23 @@
     if (!dialog.open) dialog.showModal();
     dialog.querySelector('.m2-dialog-close').focus();
   }
+  const normalize = text => text.toLocaleLowerCase('vi').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g,'d').trim();
+  const inboxSearch = nav.querySelector('#m2-inbox-search');
+  function filterInbox() {
+    const query = normalize(inboxSearch.value);
+    let matches = 0;
+    nav.querySelectorAll('.m2-nav-button').forEach(item => {
+      const match = normalize(item.textContent).includes(query);
+      item.classList.toggle('m2-filtered-out', !match);
+      if (match) matches++;
+    });
+    nav.querySelector('#m2-inbox-empty').hidden = matches > 0;
+  }
+  inboxSearch.addEventListener('input', filterInbox);
+  inboxSearch.addEventListener('change', filterInbox);
+
   app.addEventListener('input', event => {
     if (event.target.id !== 'm2-search') return;
-    const normalize = text => text.toLocaleLowerCase('vi').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g,'d').trim();
     const query = normalize(event.target.value);
     let matches = 0;
     main.querySelectorAll('.m2-search-result').forEach(item => {
@@ -361,7 +397,21 @@
   app.addEventListener('click', event => {
     const control = event.target.closest('[data-m2]');
     if (!control || !app.contains(control) || control.disabled) return;
-    const action = control.dataset.m2;
+    handleAction(control.dataset.m2, control);
+  });
+  app.addEventListener('change', event => {
+    const field = event.target.closest('.m2-reply-select');
+    if (field) field.form.querySelector('.m2-send').disabled = !field.value;
+  });
+  app.addEventListener('submit', event => {
+    const form = event.target;
+    if (!form.matches('.m2-compose-form')) return;
+    event.preventDefault();
+    const reply = form.elements.reply.value;
+    if (['ask-song', 'ask-quote', 'decline'].includes(reply)) handleAction(reply);
+  });
+
+  function handleAction(action, control) {
     if (action === 'close-dialog') { dialog.close(); return; }
     if (action === 'start' || action === 'retry') {
       state = defaultState(action === 'retry' ? 'chat' : 'lock');
@@ -447,7 +497,7 @@
     if (action === 'send-support') { state.supportSent = true; save(); render(); main.focus({preventScroll:true}); return; }
     if (action === 'report-teacher') { state.teacherWarned = true; state.teacherAfterTransfer = true; save(); render(); main.focus({preventScroll:true}); return; }
     if (action === 'finish-transfer' && state.transferred && (state.warnedAfterTransfer || state.vyAfterTransfer || state.teacherAfterTransfer)) { finish('transfer'); }
-  });
+  }
   dialog.addEventListener('close', () => { if (focusBeforeDialog && focusBeforeDialog.isConnected) focusBeforeDialog.focus(); focusBeforeDialog = null; });
   render();
 })();

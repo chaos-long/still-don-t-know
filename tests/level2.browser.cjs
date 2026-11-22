@@ -33,6 +33,13 @@ async function textInput(selector,value){const id=await element(selector);
 const visible=selector=>js('const e=document.querySelector(arguments[0]);return !!e && !!(e.offsetWidth || e.offsetHeight || e.getClientRects().length);',selector);
 const test=async(name,fn)=>{await fn();console.log('PASS '+name)};
 async function action(name) {
+  if (['ask-song','ask-quote','decline'].includes(name)) {
+    const field = '.m2-reply-select';
+    await waitFor(() => visible(field));
+    await js('const field = document.querySelector(".m2-reply-select"); field.value = arguments[0]; field.dispatchEvent(new Event("change", {bubbles:true}));', name);
+    await click('.m2-send');
+    return;
+  }
   const selector = `[data-m2="${name}"]`;
   await waitFor(() => visible(selector));
   await click(selector);
@@ -84,6 +91,12 @@ async function fresh(){await nav('practice.html');
   await selectTab('chat');
   await waitFor(async () => (await messages()).length === 2);
   assert.match((await messages())[1], /NGUYEN VAN NAM/);
+  assert.equal(await js('return document.querySelector(".m2-send").disabled'), true);
+  await textInput('#m2-inbox-search', 'danh ba');
+  assert.equal(await visible('#m2-appnav [data-target="chat"]'), false);
+  assert.equal(await visible('#m2-appnav [data-target="contacts"]'), true);
+  await textInput('#m2-inbox-search', '');
+  assert.equal(await visible('#m2-appnav [data-target="group"]'), true);
   await action('ask-quote');
   assert.equal((await messages()).length, 3);
   assert.match((await messages())[2], /gửi biên nhận/);
