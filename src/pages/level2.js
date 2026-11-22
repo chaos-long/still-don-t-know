@@ -16,16 +16,19 @@ export default {
       </section>
       <section class="m2-game" id="m2-game" aria-label="Điện thoại mô phỏng" hidden>
         <p class="m2-notice" id="m2-game-storage-warning" role="status" hidden>Trình duyệt không cho phép lưu tiến độ. Bạn vẫn có thể chơi trong phiên này nhưng không thể tiếp tục sau khi tải lại.</p>
-        <div class="m2-phone">
-          <div class="m2-statusbar"><span>15:42</span><span>● ● ▰</span></div>
-          <div id="m2-topbar" class="m2-topbar"></div>
-          <div id="m2-main" class="m2-main" tabindex="-1"></div>
-          <nav id="m2-appnav" class="m2-appnav" aria-label="Ứng dụng trên điện thoại mô phỏng" hidden>
-            <button type="button" class="m2-nav-button" data-m2="nav" data-target="chat"><span aria-hidden="true">◉</span>Chat</button>
-            <button type="button" class="m2-nav-button" data-m2="nav" data-target="group"><span aria-hidden="true">♧</span>Nhóm</button>
-            <button type="button" class="m2-nav-button" data-m2="nav" data-target="contacts"><span aria-hidden="true">☏</span>Danh bạ</button>
-            <button type="button" class="m2-nav-button" data-m2="nav" data-target="wallet"><span aria-hidden="true">▣</span>Ví lớp</button>
+        <div class="m2-phone" id="m2-shell">
+          <nav id="m2-appnav" class="m2-appnav" aria-label="Hội thoại và ứng dụng mô phỏng" hidden>
+            <p class="m2-nav-heading">Hộp thư lớp 11A2</p>
+            <button type="button" class="m2-nav-button" data-m2="nav" data-target="chat"><span class="m2-avatar" aria-hidden="true">🐧</span><span><strong>Minh</strong><small>Tin nhắn riêng</small></span></button>
+            <button type="button" class="m2-nav-button" data-m2="nav" data-target="group"><span class="m2-avatar m2-avatar-group" aria-hidden="true">11</span><span><strong>Nhóm<span class="m2-desktop-label"> Văn nghệ</span></strong><small>Văn nghệ 11A2</small></span></button>
+            <button type="button" class="m2-nav-button" data-m2="nav" data-target="contacts"><span class="m2-avatar m2-avatar-contacts" aria-hidden="true">☏</span><span><strong>Danh bạ</strong><small>Số liên hệ đã lưu</small></span></button>
+            <button type="button" class="m2-nav-button" data-m2="nav" data-target="wallet"><span class="m2-avatar m2-avatar-wallet" aria-hidden="true">₫</span><span><strong>Ví lớp</strong><small>Quỹ tổng duyệt</small></span></button>
           </nav>
+          <div class="m2-panel">
+            <div class="m2-statusbar"><span>15:42</span></div>
+            <header id="m2-topbar" class="m2-topbar"></header>
+            <div id="m2-main" class="m2-main" tabindex="-1"></div>
+          </div>
         </div>
         <p class="m2-small m2-game-note">Bạn có thể dành bao lâu tùy ý để suy nghĩ. Nội dung và giao dịch đều là mô phỏng.</p>
       </section>

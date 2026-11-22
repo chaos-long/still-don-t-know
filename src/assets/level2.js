@@ -4,6 +4,7 @@
   const key = 'lab-an-toan-so:exercise:level2';
   const intro = app.querySelector('#m2-intro');
   const game = app.querySelector('#m2-game');
+  const shell = app.querySelector('#m2-shell');
   const main = app.querySelector('#m2-main');
   const topbar = app.querySelector('#m2-topbar');
   const nav = app.querySelector('#m2-appnav');
@@ -11,10 +12,11 @@
   const dialogBody = app.querySelector('#m2-dialog-body');
   const storageWarning = app.querySelector('#m2-storage-warning');
   const gameStorageWarning = app.querySelector('#m2-game-storage-warning');
-  const defaultState = (screen = 'lock') => ({ status:'active', screen, transferred:false, blocked:false, viewedReceipt:false, askedQuote:false, viewedQuote:false, askedSong:false, viewedHistory:false, verifiedMinh:false, talkedVy:false, groupWarned:false, teacherWarned:false, warnedAfterTransfer:false, vyAfterTransfer:false, teacherAfterTransfer:false, supportSent:false, hint:0, result:null, receiver:null });
+  const defaultState = (screen = 'lock') => ({ status:'active', screen, transferred:false, blocked:false, viewedReceipt:false, askedQuote:false, viewedQuote:false, askedSong:false, viewedHistory:false, verifiedMinh:false, talkedVy:false, groupWarned:false, teacherWarned:false, warnedAfterTransfer:false, vyAfterTransfer:false, teacherAfterTransfer:false, supportSent:false, hint:0, result:null, receiver:null, chatEvents:[], delivered:[] });
   let state = null;
   let storageAvailable = true;
   let focusBeforeDialog = null;
+  let messageTimer;
   try {
     const raw = localStorage.getItem(key);
     let saved = null;
@@ -22,6 +24,19 @@
     const allowedScreens = ['lock','chat','group','contacts','call','chat-call','vy','wallet','confirm','history','support','after-transfer','decline','result'];
     if (saved && ['active','completed'].includes(saved.status) && allowedScreens.includes(saved.screen)) {
       state = {...defaultState(), ...saved};
+      // Những tin đã thấy trước bản cập nhật được giữ lại như lịch sử.
+      if (!Array.isArray(saved.chatEvents) || !Array.isArray(saved.delivered)) {
+        state.chatEvents = [];
+        state.delivered = saved.screen === 'lock' ? [] : ['minh-request', 'minh-wallet'];
+        if (saved.askedSong) rememberExchange('song');
+        if (saved.askedQuote) rememberExchange('quote');
+        if (saved.transferred) {
+          state.chatEvents.push('transfer');
+          state.delivered.push('transfer-vy', 'transfer-minh');
+        }
+      } else {
+        state.chatEvents = saved.chatEvents.filter(event => ['song', 'quote', 'transfer', 'decline'].includes(event));
+      }
       if (state.status === 'completed' && !state.result) state = null;
     }
   } catch { storageAvailable = false; storageWarning.hidden = false; }
@@ -37,6 +52,98 @@
   const button = (action, label, style = 'm2-choice', data = '') => `<button type="button" class="${style}" data-m2="${action}" ${data}>${label}</button>`;
   const heading = (eyebrow, title, desc = '') => `<p class="m2-eyebrow">${eyebrow}</p><h2>${title}</h2>${desc ? `<p class="m2-lead">${desc}</p>` : ''}`;
   const msg = (who, text, mine = false) => `<div class="m2-message${mine ? ' mine' : ''}"><span class="m2-message-meta">${who}</span><div class="m2-bubble">${text}</div></div>`;
+  const beat = (id, html, immediate = false) => ({id, html, immediate});
+  const request = 'Ê m còn cầm quỹ lớp không? Chuyển giúp t 200k cọc loa với, lát gặp t tính lại.';
+  const rehearsal = '16 giờ cô mở hội trường nhé. Nhóm âm thanh nhớ mang loa qua cửa bên hông giúp cô.';
+  const transferVy = 'Tớ gửi lại biên nhận cọc buổi sáng ở đây nha. Chiều nay ai lấy loa thì chỉ cần đọc tên lớp thôi, khỏi trả thêm.';
+  const transferMinh = 'Bên kia bảo chưa thấy tiền. M xem lại giúp t với.';
+  const warnReply = 'May quá, tớ cũng vừa nhận được tin nhờ ứng thêm.';
+  const warnTransferReply = 'Tớ đã hủy giao dịch đang chờ xác nhận. Cảm ơn cậu báo nhé!';
+
+  function warningBeats(afterTransfer, showChannel = false) {
+    const id = afterTransfer ? 'warn-transfer' : 'warn-group';
+    return [
+      beat(`${id}-sent`, msg(showChannel ? 'Bạn · Nhóm lớp' : 'Bạn', 'Cả lớp khoan chuyển thêm tiền cọc theo tin nhắn từ tài khoản Minh nhé.', true), true),
+      beat(`${id}-reply`, msg(showChannel ? 'Vy · Nhóm lớp' : 'Vy · Mới đây', afterTransfer ? warnTransferReply : warnReply)),
+    ];
+  }
+
+  function rememberExchange(topic) {
+    state.chatEvents.push(topic);
+    state.delivered.push(`${topic}-question`, `${topic}-answer`);
+  }
+
+  function chatBeats() {
+    const conversations = {
+      song: [
+        beat('song-question', msg('Bạn', 'M đang tập bài gì?', true), true),
+        beat('song-answer', msg('Minh 🐧', '“Nắng sân trường” đó, t đang sửa nốt đoạn đầu.')),
+      ],
+      quote: [
+        beat('quote-question', msg('Bạn', 'M gửi biên nhận cho t xem.', true), true),
+        beat('quote-answer', msg('Minh 🐧', `T gửi đây nha. ${button('quote','Xem ảnh Minh gửi','m2-secondary')}`)),
+      ],
+      transfer: [beat('transfer-minh', msg('Minh 🐧', transferMinh))],
+      decline: [beat('decline-answer', msg('Bạn', 'Để lát gặp ở hội trường nha.', true), true)],
+    };
+    return [
+      beat('minh-request', msg('Minh 🐧 · 15:42', request)),
+      beat('minh-wallet', msg('Minh 🐧', 'Chuyển vào ví NGUYEN VAN NAM nha, 200k thôi.')),
+      ...state.chatEvents.flatMap(event => conversations[event] || []),
+    ];
+  }
+
+  function playMessages(messages) {
+    const log = main.querySelector('[data-m2-message-log]');
+    const nextActions = main.querySelector('[data-m2-after-messages]');
+    const typing = main.querySelector('.m2-typing');
+    const scrollArea = log.closest('.m2-transcript, .m2-group-messages');
+    const scrollToLatest = () => {
+      if (scrollArea) scrollArea.scrollTop = scrollArea.scrollHeight;
+    };
+    let index = 0;
+    nextActions?.setAttribute('hidden', '');
+
+    function append(message, isNew) {
+      log.insertAdjacentHTML('beforeend', message.html);
+      if (isNew) log.lastElementChild.classList.add('m2-arrival');
+    }
+
+    function advance() {
+      while (index < messages.length) {
+        const message = messages[index];
+        if (!message.immediate && !state.delivered.includes(message.id)) {
+          if (typing) typing.hidden = false;
+          scrollToLatest();
+          messageTimer = setTimeout(() => {
+            state.delivered.push(message.id);
+            if (message.id === 'call-answer') state.verifiedMinh = true;
+            save();
+            append(message, true);
+            index++;
+            advance();
+          }, 720);
+          return;
+        }
+        const isNew = !state.delivered.includes(message.id);
+        if (isNew) {
+          state.delivered.push(message.id);
+          save();
+        }
+        append(message, isNew);
+        index++;
+      }
+      if (typing) typing.hidden = true;
+      nextActions?.removeAttribute('hidden');
+      scrollToLatest();
+    }
+    advance();
+  }
+
+  const messageLog = (label = 'Tin nhắn mới') =>
+    `<div class="m2-list m2-live-log" data-m2-message-log role="log" aria-label="${label}"></div>`;
+  const typingIndicator = '<p class="m2-typing" hidden><span aria-hidden="true">•••</span> Đang soạn tin</p>';
+  const canPrepareTransfer = () => !state.transferred && !state.blocked && state.delivered.includes('minh-wallet');
   const groupMessage = `<article class="m2-receipt m2-search-result" data-search="cọc loa vy 200k ứng biên nhận thanh toán"><p class="m2-message-meta">Vy · 11:26</p><p>“Tớ ứng 200k cọc rồi nha. Chiều lấy loa, cuối buổi lớp hoàn tớ.”</p><div class="m2-evidence"><span aria-hidden="true">🔊</span><div><strong>Loa đỏ · Biên nhận</strong><br><span class="m2-small">Nhấn để xem chi tiết</span></div></div>${button('receipt','Xem biên nhận','m2-secondary')}</article>`;
   function mainNavFor(screen) {
     if (['chat','chat-call'].includes(screen)) return 'chat';
@@ -45,75 +152,112 @@
     if (['wallet','confirm','history','support','after-transfer'].includes(screen)) return 'wallet';
     return '';
   }
-  const names = { lock:'Thông báo', chat:'Minh 🐧', group:'Văn nghệ 11A2', contacts:'Danh bạ', call:'Cuộc gọi từ danh bạ', 'chat-call':'Cuộc gọi trong chat', vy:'Vy · Phụ trách loa', wallet:'Ví lớp', confirm:'Xác nhận chuyển tiền', history:'Lịch sử giao dịch', support:'Hỗ trợ giao dịch', 'after-transfer':'Kiểm tra khoản chi', decline:'Tin nhắn từ nhóm lớp', result:'Kết quả' };
+  const names = { lock:'Thông báo', chat:'Minh', group:'Văn nghệ 11A2', contacts:'Danh bạ', call:'Cuộc gọi từ danh bạ', 'chat-call':'Cuộc gọi trong chat', vy:'Vy · Phụ trách loa', wallet:'Ví lớp', confirm:'Xác nhận chuyển tiền', history:'Lịch sử giao dịch', support:'Hỗ trợ giao dịch', 'after-transfer':'Kiểm tra khoản chi', decline:'Tin nhắn từ nhóm lớp', result:'Kết quả' };
+  const conversationAvatars = {
+    chat: ['🐧', 'Tin nhắn riêng'],
+    group: ['11', 'Nhóm lớp'],
+    vy: ['V', 'Tin nhắn riêng'],
+    decline: ['11', 'Nhóm lớp'],
+  };
   function render() {
+    clearTimeout(messageTimer);
     intro.hidden = !!state;
     game.hidden = !state;
     if (!state) return;
     const screen = state.screen;
-    topbar.innerHTML = `<span>${names[screen] || 'Điện thoại'}</span><span class="m2-tag">MÔ PHỎNG</span>`;
+    shell.dataset.screen = screen;
+    const avatar = conversationAvatars[screen];
+    topbar.innerHTML = `<div class="m2-contact">${avatar ? `<span class="m2-avatar" aria-hidden="true">${avatar[0]}</span>` : ''}<div><strong>${names[screen] || 'Điện thoại'}</strong>${avatar ? `<small>${avatar[1]}</small>` : ''}</div></div><span class="m2-tag">MÔ PHỎNG</span>`;
     nav.hidden = ['lock','result'].includes(screen);
     app.querySelectorAll('.m2-nav-button').forEach(el => {
       if (el.dataset.target === mainNavFor(screen)) el.setAttribute('aria-current','page');
       else el.removeAttribute('aria-current');
     });
     let html = '';
+    let messages = [];
     if (screen === 'lock') {
+      messages = [
+        beat('lock-group', `<button class="m2-notification" type="button" data-m2="nav" data-target="group"><span class="m2-notification-title">Văn nghệ 11A2 · Cô Hạnh</span><span>${rehearsal}</span></button>`),
+        beat('lock-minh', `<button class="m2-notification" type="button" data-m2="nav" data-target="chat"><span class="m2-notification-title">Minh 🐧</span><span>${request}</span></button>`),
+      ];
       html = `<div class="m2-lock">${heading('THỨ BA · 15:42','Còn 18 phút','16:00 lớp bắt đầu tổng duyệt. Hãy chạm vào thông báo để mở ứng dụng.')}
-        <button class="m2-notification" type="button" data-m2="nav" data-target="group"><span class="m2-notification-title">Văn nghệ 11A2 · Cô Hạnh</span><span>16 giờ cô mở hội trường nhé. Nhóm âm thanh nhớ mang loa qua cửa bên hông giúp cô.</span></button>
-        <button class="m2-notification" type="button" data-m2="nav" data-target="chat"><span class="m2-notification-title">Minh 🐧</span><span>Ê m còn cầm quỹ lớp không? Chuyển giúp t 200k cọc loa với, lát gặp t tính lại.</span></button></div>`;
+        ${messageLog('Thông báo mới')}</div>`;
     }
     if (screen === 'chat' && state.blocked) {
       html = `${heading('TÀI KHOẢN ĐÃ CHẶN','Minh 🐧','Bạn đã chặn tài khoản này. Bạn có thể tiếp tục xử lý tình huống qua nhóm lớp hoặc danh bạ mà không cần mở chặn.')}<div class="m2-choices">${button('group','Xem nhóm lớp','m2-primary')}${button('contacts','Mở danh bạ','m2-secondary')}${button('continue-decline','Xem tin nhắn về việc nhận loa','m2-secondary')}</div>`;
     } else if (screen === 'chat') {
-      html = `<div class="m2-chat">${heading('CUỘC TRÒ CHUYỆN CŨ','Minh 🐧','Trò chuyện với Minh')}
-        ${button('old-history',state.viewedHistory ? 'Ẩn tin nhắn cũ' : 'Xem tin nhắn cũ','m2-secondary')}
+      messages = chatBeats();
+      html = `<div class="m2-chat">
+        <div class="m2-chat-toolbar">
+          ${button('old-history',state.viewedHistory ? 'Ẩn tin nhắn cũ' : 'Xem tin nhắn cũ','m2-tool')}
+          ${button('chat-call','Gọi trong đoạn chat','m2-tool')}
+          ${!state.transferred ? button('mute','Tắt thông báo','m2-tool') + button('block','Chặn tài khoản','m2-tool') : ''}
+        </div>
+        <div class="m2-transcript" tabindex="0" aria-label="Hội thoại với Minh">
+        <div class="m2-chat-date">Tối qua</div>
         ${state.viewedHistory ? `${msg('Bạn · Tối qua','Mai lớp mình tập bài “Nắng sân trường” nhé.',true)}${msg('Minh · Tối qua','Ừ, t lưu bài “Nắng sân trường” rồi.')}` : ''}
         ${msg('Bạn · Tối qua','Mai mà m bật nhầm nhạc như hôm bữa là cả lớp nhảy trên nền nhạc chuông đó.',true)}
         ${msg('Minh · Tối qua','Yên tâm =))) lần này t lưu hẳn hai bản.')}
-        ${msg('Minh 🐧 · 15:42','Ê m còn cầm quỹ lớp không? Chuyển giúp t 200k cọc loa với, lát gặp t tính lại.')}
-        ${msg('Minh 🐧','Chuyển vào ví NGUYEN VAN NAM nha, 200k thôi.')}
-        ${state.askedSong ? `${msg('Bạn','M đang tập bài gì?',true)}${msg('Minh 🐧','“Nắng sân trường” đó, t đang sửa nốt đoạn đầu.')}` : ''}
-        ${state.askedQuote ? `${msg('Bạn','M gửi biên nhận cho t xem.',true)}${msg('Minh 🐧',`T gửi đây nha. ${button('quote','Xem ảnh Minh gửi','m2-secondary')}`)}` : ''}
-        ${state.transferred ? msg('Minh 🐧','Bên kia bảo chưa thấy tiền. M xem lại giúp t với.') : ''}
-        <div class="m2-divider"></div><p class="m2-small">Bạn muốn làm gì?</p><div class="m2-choices">
+        <div class="m2-chat-date">Hôm nay · 15:42</div>
+        ${messageLog('Tin nhắn với Minh')}
+        ${typingIndicator}
+        </div>
+        <div class="m2-composer">
+        <p class="m2-small">Trả lời Minh</p><div data-m2-after-messages><div class="m2-replies">
         ${!state.askedSong ? button('ask-song','M đang tập bài gì?') : ''}
-        ${!state.askedQuote ? button('ask-quote','M gửi biên nhận cho t xem.') : button('quote',state.viewedQuote ? 'Xem lại ảnh Minh gửi' : 'Xem ảnh Minh gửi')}
-        ${button('chat-call','Gọi trong đoạn chat')}
+        ${!state.askedQuote ? button('ask-quote','M gửi biên nhận cho t xem.') : ''}
+        ${!state.transferred ? (state.chatEvents.includes('decline') ? button('continue-decline','Xem nhóm lớp') : button('decline','Để lát gặp ở hội trường nha.')) : ''}
         ${!state.transferred ? button('wallet','Chuyển tiền','m2-primary') : button('after-transfer','Kiểm tra khoản chi','m2-primary')}
-        ${!state.transferred ? `${button('decline','Để lát gặp ở hội trường nha.')}${button('mute','Tắt thông báo')}${button('block','Chặn tài khoản')}` : ''}
-        ${button('hint','Mình không biết làm gì tiếp','m2-secondary')}
+        ${button('hint','Gợi ý','m2-tool')}
         </div>${state.hint ? `<p class="m2-hint">${state.hint === 1 ? 'Trong lớp, ai là người trực tiếp thuê loa?' : 'Hãy xem tin ghim trong nhóm Văn nghệ 11A2 để biết phân công.'}</p>` : ''}
-        </div>`;
+        </div></div></div>`;
     }
     if (screen === 'group') {
+      if (state.groupWarned) messages.push(...warningBeats(false));
+      if (state.transferred) messages.push(beat('transfer-vy', msg('Vy · Mới đây', transferVy)));
+      if (state.warnedAfterTransfer) messages.push(...warningBeats(true));
       html = `${heading('NHÓM LỚP','Văn nghệ 11A2','Cuộc trò chuyện về buổi tổng duyệt')}
         <div class="m2-pinned"><strong>Tin ghim · Phân công</strong><p>Vy – loa, Minh – nhạc.</p></div>
         <label class="m2-label" for="m2-search">Tìm trong nhóm</label><input id="m2-search" class="m2-input" type="search" placeholder="Tìm tin nhắn, ví dụ: cọc" autocomplete="off"><p class="m2-small" id="m2-search-empty" hidden>Không tìm thấy tin nhắn phù hợp.</p>
         <div class="m2-list m2-group-messages" id="m2-group-messages" aria-label="Tin nhắn nhóm" tabindex="0">${groupMessage}<article class="m2-message m2-search-result" data-search="bạn lớp tập nhạc sân khấu"><span class="m2-message-meta">Bạn lớp · 14:15</span><div class="m2-bubble">Mình đã kiểm tra dây nối cho sân khấu rồi nhé.</div></article><article class="m2-message m2-search-result" data-search="lớp lịch tổng duyệt"><span class="m2-message-meta">Bạn lớp · 15:20</span><div class="m2-bubble">Mọi người nhớ lịch tổng duyệt lúc 16 giờ nha.</div></article><article class="m2-message m2-search-result" data-search="cô hạnh 16 giờ hội trường loa cửa bên hông"><span class="m2-message-meta">Cô Hạnh · 15:40</span><div class="m2-bubble">16 giờ cô mở hội trường nhé. Nhóm âm thanh nhớ mang loa qua cửa bên hông giúp cô.</div></article>
-        ${state.transferred ? msg('Vy · Mới đây','Tớ gửi lại biên nhận cọc buổi sáng ở đây nha. Chiều nay ai lấy loa thì chỉ cần đọc tên lớp thôi, khỏi trả thêm.') : ''}</div>
+        ${messages.length ? messageLog('Tin nhắn mới trong nhóm') + typingIndicator : ''}</div>
         <div class="m2-choices">${button('vy','Nhắn Vy về tiền cọc','m2-primary')}
         ${state.transferred || state.verifiedMinh ? button('warn-group', (state.transferred ? state.warnedAfterTransfer : state.groupWarned) ? 'Đã báo nhóm lớp' : 'Cảnh báo nhóm lớp','m2-secondary', (state.transferred ? state.warnedAfterTransfer : state.groupWarned) ? 'disabled' : '') : ''}
         ${state.transferred ? button('after-transfer','Kiểm tra chuyện vừa xảy ra','m2-secondary') : ''}
-        ${state.viewedQuote && state.viewedReceipt ? button('compare','Đặt hai ảnh cạnh nhau','m2-secondary') : ''}</div>
-        ${(state.transferred ? state.warnedAfterTransfer : state.groupWarned) ? `<p class="m2-notice">${state.transferred ? 'Sau tin nhắn của bạn, Vy đã hủy một giao dịch đang chờ xác nhận.' : 'Vy: “May quá, tớ cũng vừa nhận được tin nhờ ứng thêm.”'}</p>` : ''}`;
+        ${state.viewedQuote && state.viewedReceipt ? button('compare','Đặt hai ảnh cạnh nhau','m2-secondary') : ''}</div>`;
     }
     if (screen === 'contacts') html = `${heading('DANH BẠ','Liên hệ đã lưu','Số cá nhân đã có trong máy từ trước.')}
       <article class="m2-card"><span class="m2-tag">ĐÃ LƯU</span><h3>Minh – số cá nhân</h3><p>Liên hệ trong danh bạ của bạn.</p>${button('call','Gọi số cá nhân','m2-primary')}</article>
       <article class="m2-card"><h3>Vy</h3><p>Phụ trách thuê loa cho lớp.</p>${button('vy','Nhắn Vy','m2-secondary')}</article>`;
     if (screen === 'chat-call') html = `${heading('CUỘC GỌI','Không được bắt máy','Bạn gọi ngay trong đoạn chat, nhưng cuộc gọi không được bắt máy. Điều này chưa đủ để kết luận chuyện gì đã xảy ra.')}
       <div class="m2-choices">${button('chat','Về đoạn chat','m2-secondary')}${button('contacts','Mở danh bạ','m2-primary')}${button('vy','Hỏi Vy về tiền cọc')}</div>`;
-    if (screen === 'call') html = `${heading('CUỘC GỌI TỪ SỐ ĐÃ LƯU','Minh – số cá nhân','Sau hai hồi chuông, có tiếng nhạc tập ở đầu dây bên kia.')}
-      <div class="m2-list">${msg('Minh','Alo? M nghe thử đoạn đầu luôn không, t vừa sửa xong.')}${msg('Bạn','Ủa, m vừa nhắn t chuyển tiền cọc loa hả?',true)}${msg('Minh','Đâu có. T đứng với cô nãy giờ mà. Khoan, nó nhắn từ nick t hả?')}</div>
-      <p class="m2-small">Bạn đã nói chuyện với Minh qua số đã lưu. Tiếp theo bạn chọn gì?</p><div class="m2-choices">${button('minh-audio','Quay lại lo âm thanh','m2-primary')}${button('minh-report','Báo ngay vào nhóm lớp')}${button('minh-teacher','Nhờ Minh báo lớp qua cô Hạnh')}</div>`;
-    if (screen === 'vy') html = `${heading('TIN NHẮN','Vy · Phụ trách loa','Bạn hỏi người trực tiếp thuê loa cho lớp.')}
-      <div class="m2-list">${msg('Bạn','Vy ơi, loa chiều nay còn thiếu 200k cọc hả?',true)}${msg('Vy','Tớ cọc sáng rồi. Cậu kéo lên tin có hình cái loa đỏ ấy.')}${msg('Vy','À mà tiện, cậu ra cửa bên hông nhận loa giúp tớ được không? Tớ đang mắc thay đồ.')}</div>
+    if (screen === 'call') {
+      messages = [
+        beat('call-greeting', msg('Minh','Alo? M nghe thử đoạn đầu luôn không, t vừa sửa xong.')),
+        beat('call-question', msg('Bạn','Ủa, m vừa nhắn t chuyển tiền cọc loa hả?',true)),
+        beat('call-answer', msg('Minh','Đâu có. T đứng với cô nãy giờ mà. Khoan, nó nhắn từ nick t hả?')),
+      ];
+      html = `${heading('CUỘC GỌI TỪ SỐ ĐÃ LƯU','Minh – số cá nhân','Sau hai hồi chuông, có tiếng nhạc tập ở đầu dây bên kia.')}
+        ${messageLog('Nội dung cuộc gọi')}
+        <div data-m2-after-messages><p class="m2-small">Bạn đã nói chuyện với Minh qua số đã lưu. Tiếp theo bạn chọn gì?</p><div class="m2-choices">${button('minh-audio','Quay lại lo âm thanh','m2-primary')}${button('minh-report','Báo ngay vào nhóm lớp')}${button('minh-teacher','Nhờ Minh báo lớp qua cô Hạnh')}</div></div>`;
+    }
+    if (screen === 'vy') {
+      const prefix = state.transferred ? 'vy-after' : 'vy';
+      messages = [
+        beat(`${prefix}-question`, msg('Bạn', state.transferred ? 'Vy ơi, tớ vừa chuyển 200k theo tin nhắn từ tài khoản Minh. Loa chiều nay còn thiếu cọc không?' : 'Vy ơi, loa chiều nay còn thiếu 200k cọc hả?', true), true),
+        beat(`${prefix}-answer`, msg('Vy','Tớ cọc sáng rồi. Cậu kéo lên tin có hình cái loa đỏ ấy.')),
+        beat(`${prefix}-pickup`, msg('Vy','À mà tiện, cậu ra cửa bên hông nhận loa giúp tớ được không? Tớ đang mắc thay đồ.')),
+      ];
+      html = `${heading('TIN NHẮN','Vy · Phụ trách loa','Bạn hỏi người trực tiếp thuê loa cho lớp.')}
+      ${messageLog('Tin nhắn với Vy')}${typingIndicator}
+      <div data-m2-after-messages>
       ${state.transferred ? '<p class="m2-notice">Vy giúp đối chiếu khoản cọc và thu xếp loa; giao dịch chuyển nhầm vẫn còn trong lịch sử ví.</p>' : ''}
-      <div class="m2-choices">${button('vy-self','Mình sẽ ra nhận loa','m2-primary')}${button('vy-friend','Nhờ Vy gọi bạn khác nhận thay')}${button('group','Xem nhóm và biên nhận','m2-secondary')}${state.transferred ? button('after-transfer','Tiếp tục kiểm tra khoản chi','m2-secondary') : ''}</div>`;
+      <div class="m2-choices">${button('vy-self','Mình sẽ ra nhận loa','m2-primary')}${button('vy-friend','Nhờ Vy gọi bạn khác nhận thay')}${button('group','Xem nhóm và biên nhận','m2-secondary')}${state.transferred ? button('after-transfer','Tiếp tục kiểm tra khoản chi','m2-secondary') : ''}</div></div>`;
+    }
     if (screen === 'wallet') html = `${heading('VÍ LỚP','Quỹ lớp','Các con số và giao dịch đều là mô phỏng.')}
       <div class="m2-money"><span>Số dư hiện tại</span><strong>${state.transferred ? '300.000đ' : '500.000đ'}</strong></div>
-      ${state.transferred ? '<p class="m2-notice">Đã có một giao dịch 200.000đ. Bạn có thể xem lại và gửi yêu cầu hỗ trợ.</p>' : '<p class="m2-small">Bạn có thể xem giao dịch trước khi xác nhận chuyển.</p>'}
-      <div class="m2-choices">${!state.transferred && !state.blocked ? button('confirm','Chuẩn bị chuyển 200.000đ','m2-primary') : state.transferred ? button('after-transfer','Kiểm tra chuyện vừa xảy ra','m2-primary') : ''}${button('history','Xem lịch sử giao dịch','m2-secondary')}${button('chat','Quay lại chat','m2-secondary')}</div>`;
+      ${state.transferred ? '<p class="m2-notice">Đã có một giao dịch 200.000đ. Bạn có thể xem lại và gửi yêu cầu hỗ trợ.</p>' : ''}
+      <div class="m2-choices">${canPrepareTransfer() ? button('confirm','Chuẩn bị chuyển 200.000đ','m2-primary') : state.transferred ? button('after-transfer','Kiểm tra chuyện vừa xảy ra','m2-primary') : ''}${button('history','Xem lịch sử giao dịch','m2-secondary')}${button('chat','Quay lại chat','m2-secondary')}</div>`;
     if (screen === 'confirm') html = `${heading('KIỂM TRA TRƯỚC KHI CHUYỂN','Xác nhận giao dịch','Đây là bước xem lại. Tiền chỉ được chuyển khi bạn bấm xác nhận.')}
       <div class="m2-card"><p class="m2-small">Người nhận do tài khoản chat cung cấp</p><h3>NGUYEN VAN NAM</h3><p class="m2-small">Ví mô phỏng · 094 *** 123</p><div class="m2-divider"></div><p class="m2-small">Số tiền</p><strong class="m2-money-inline">200.000đ</strong></div>
       <div class="m2-choices">${button('transfer','Xác nhận chuyển 200.000đ','m2-primary')}${button('wallet','Quay lại, chưa chuyển','m2-secondary')}</div>`;
@@ -121,20 +265,32 @@
     if (screen === 'support') html = `${heading('VÍ LỚP','Hỗ trợ giao dịch','Mã giao dịch: MO-PHONG-1126')}
       ${state.supportSent ? '<div class="m2-notice"><strong>Đã gửi yêu cầu hỗ trợ.</strong><p>Giao dịch chưa được hoàn lại; quỹ lớp vẫn còn 300.000đ.</p></div>' : '<div class="m2-card"><p>Bạn có thể gửi yêu cầu hỗ trợ cho giao dịch mô phỏng này. Việc gửi yêu cầu không tự động hoàn tiền.</p></div>'}
       <div class="m2-choices">${!state.supportSent ? button('send-support','Gửi yêu cầu hỗ trợ','m2-primary') : ''}${button('after-transfer','Tiếp tục kiểm tra khoản chi','m2-secondary')}${button('history','Về lịch sử ví','m2-secondary')}</div>`;
-    if (screen === 'after-transfer') html = `${heading('MỤC TIÊU MỚI','Kiểm tra chuyện vừa xảy ra','Kiểm tra giao dịch và giúp lớp xử lý khoản chi.')}
-      <div class="m2-list">${msg('Vy · Nhóm lớp','Tớ gửi lại biên nhận cọc buổi sáng ở đây nha. Chiều nay ai lấy loa thì chỉ cần đọc tên lớp thôi, khỏi trả thêm.')}${msg('Minh 🐧 · Chat riêng','Bên kia bảo chưa thấy tiền. M xem lại giúp t với.')}</div>
+    if (screen === 'after-transfer') {
+      messages = [
+        beat('transfer-vy', msg('Vy · Nhóm lớp', transferVy)),
+        beat('transfer-minh', msg('Minh 🐧 · Chat riêng', transferMinh)),
+      ];
+      if (state.warnedAfterTransfer) messages.push(...warningBeats(true, true));
+      html = `${heading('MỤC TIÊU MỚI','Kiểm tra chuyện vừa xảy ra','Kiểm tra giao dịch và giúp lớp xử lý khoản chi.')}
       <div class="m2-money"><span>Số dư quỹ lớp</span><strong>300.000đ</strong></div>
+      ${messageLog('Tin nhắn sau giao dịch')}${typingIndicator}
+      <div data-m2-after-messages>
       ${state.warnedAfterTransfer ? '<div class="m2-notice">Sau tin nhắn của bạn, Vy đã hủy một giao dịch đang chờ xác nhận.</div>' : ''}
       ${state.supportSent ? '<div class="m2-notice">Đã gửi yêu cầu hỗ trợ. Khoản tiền chưa được hoàn lại.</div>' : ''}
       ${state.vyAfterTransfer ? '<div class="m2-notice">Vy đã biết chuyện và giúp đối chiếu khoản cọc, thu xếp loa cho lớp.</div>' : ''}
       ${state.teacherAfterTransfer ? '<div class="m2-notice">Cô Hạnh đã nhận được thông báo và giúp lớp đối chiếu, thu xếp loa.</div>' : ''}
-      <div class="m2-choices">${button('history','Mở lịch sử ví','m2-primary')}${button('vy','Báo và hỏi Vy')}${button('report-teacher','Báo cô Hạnh')}${button('group','Mở nhóm lớp')}${!state.warnedAfterTransfer ? button('warn-group','Cảnh báo nhóm lớp') : ''}${state.warnedAfterTransfer || state.vyAfterTransfer || state.teacherAfterTransfer ? button('finish-transfer','Kết thúc và xem kết quả','m2-secondary') : ''}</div>`;
-    if (screen === 'decline') html = `${heading('NHÓM LỚP','Tin nhắn mới','Bạn đã dừng yêu cầu chuyển tiền và chưa gửi tiền.')}
-      ${msg('Vy','Ai ở gần cửa bên hông nhận loa với?')}
-      <div class="m2-choices">${button('decline-self','Mình sẽ ra nhận loa','m2-primary')}${button('decline-friend','Để bạn khác nhận loa')}</div>`;
+      <div class="m2-choices">${button('history','Mở lịch sử ví','m2-primary')}${button('vy','Báo và hỏi Vy')}${button('report-teacher','Báo cô Hạnh')}${button('group','Mở nhóm lớp')}${!state.warnedAfterTransfer ? button('warn-group','Cảnh báo nhóm lớp') : ''}${state.warnedAfterTransfer || state.vyAfterTransfer || state.teacherAfterTransfer ? button('finish-transfer','Kết thúc và xem kết quả','m2-secondary') : ''}</div></div>`;
+    }
+    if (screen === 'decline') {
+      messages = [beat('decline-vy', msg('Vy','Ai ở gần cửa bên hông nhận loa với?'))];
+      html = `${heading('NHÓM LỚP','Tin nhắn mới','Bạn đã dừng yêu cầu chuyển tiền và chưa gửi tiền.')}
+        ${messageLog('Tin nhắn từ nhóm lớp')}${typingIndicator}
+        <div class="m2-choices" data-m2-after-messages>${button('decline-self','Mình sẽ ra nhận loa','m2-primary')}${button('decline-friend','Để bạn khác nhận loa')}</div>`;
+    }
     if (screen === 'result') html = resultView();
     main.innerHTML = html;
     main.scrollTop = 0;
+    if (messages.length) playMessages(messages);
     if (screen === 'group') { const thread = main.querySelector('#m2-group-messages'); thread.scrollTop = thread.scrollHeight; }
     if (!storageAvailable) { storageWarning.hidden = false; gameStorageWarning.hidden = false; }
   }
@@ -214,7 +370,7 @@
     if (!state || state.status !== 'active') return;
     if (action === 'nav') { navScreen(control.dataset.target); return; }
     if (['chat','group','contacts','wallet','after-transfer','history','support','confirm','vy','chat-call'].includes(action)) {
-      if (action === 'confirm' && (state.transferred || state.blocked)) return;
+      if (action === 'confirm' && !canPrepareTransfer()) return;
       if (action === 'vy') { state.talkedVy = true; if (state.transferred) state.vyAfterTransfer = true; }
       navScreen(action); return;
     }
@@ -226,10 +382,22 @@
       else selectCode();
       return;
     }
-    if (action === 'call') { state.verifiedMinh = true; navScreen('call'); return; }
-    if (action === 'old-history') { state.viewedHistory = !state.viewedHistory; save(); render(); main.focus({preventScroll:true}); return; }
-    if (action === 'ask-song') { state.askedSong = true; save(); render(); main.focus({preventScroll:true}); return; }
-    if (action === 'ask-quote') { state.askedQuote = true; save(); render(); main.focus({preventScroll:true}); return; }
+    if (action === 'call') { navScreen('call'); return; }
+    if (action === 'old-history') {
+      state.viewedHistory = !state.viewedHistory;
+      save(); render();
+      if (state.viewedHistory) main.querySelector('.m2-transcript').scrollTop = 0;
+      main.querySelector('[data-m2="old-history"]').focus({preventScroll:true});
+      return;
+    }
+    if (action === 'ask-song' || action === 'ask-quote') {
+      const topic = action === 'ask-song' ? 'song' : 'quote';
+      if (topic === 'song') state.askedSong = true;
+      else state.askedQuote = true;
+      state.chatEvents.push(topic);
+      save(); render(); main.focus({preventScroll:true});
+      return;
+    }
     if (action === 'hint') { state.hint = Math.min(2, state.hint + 1); save(); render(); main.focus({preventScroll:true}); return; }
     if (['quote','receipt','compare'].includes(action)) {
       if (action === 'quote') state.viewedQuote = true;
@@ -237,8 +405,15 @@
       if (action === 'compare' && !(state.viewedReceipt && state.viewedQuote)) return;
       save(); showEvidence(action); return;
     }
-    if (['decline','mute','block'].includes(action) && !state.transferred) { if (action === 'block') state.blocked = true; navScreen('decline'); return; }
-    if (action === 'continue-decline' && state.blocked && !state.transferred) { navScreen('decline'); return; }
+    if (action === 'decline' && !state.transferred) {
+      state.chatEvents.push('decline');
+      save(); render(); main.focus({preventScroll:true});
+      return;
+    }
+    if (['mute','block','continue-decline'].includes(action) && !state.transferred) {
+      if (action === 'block') state.blocked = true;
+      navScreen('decline'); return;
+    }
     if (['decline-self','decline-friend'].includes(action)) {
       state.receiver = action === 'decline-self' ? 'self' : 'friend'; finish('decline'); return;
     }
@@ -248,18 +423,26 @@
       finish('vy'); return;
     }
     if (action === 'warn-group') {
-      state.groupWarned = true; if (state.transferred) state.warnedAfterTransfer = true; markStory();
+      if (state.transferred) state.warnedAfterTransfer = true;
+      else state.groupWarned = true;
+      markStory();
       navScreen(state.transferred ? 'after-transfer' : 'group'); return;
     }
     if (['minh-audio','minh-report','minh-teacher'].includes(action)) {
-      if (action === 'minh-report') { state.groupWarned = true; if (state.transferred) state.warnedAfterTransfer = true; markStory(); }
+      if (action === 'minh-report') {
+        if (state.transferred) state.warnedAfterTransfer = true;
+        else state.groupWarned = true;
+        markStory();
+      }
       if (action === 'minh-teacher') { state.teacherWarned = true; if (state.transferred) state.teacherAfterTransfer = true; markStory(); }
       if (state.transferred) { navScreen('after-transfer'); return; }
       finish('minh'); return;
     }
     if (action === 'transfer') {
       if (state.transferred || state.blocked || state.screen !== 'confirm') return;
-      state.transferred = true; navScreen('after-transfer'); return;
+      state.transferred = true;
+      state.chatEvents.push('transfer');
+      navScreen('after-transfer'); return;
     }
     if (action === 'send-support') { state.supportSent = true; save(); render(); main.focus({preventScroll:true}); return; }
     if (action === 'report-teacher') { state.teacherWarned = true; state.teacherAfterTransfer = true; save(); render(); main.focus({preventScroll:true}); return; }

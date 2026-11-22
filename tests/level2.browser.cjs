@@ -32,7 +32,11 @@ async function textInput(selector,value){const id=await element(selector);
   await command('POST',`/element/${id}/clear`,{});return command('POST',`/element/${id}/value`,{text:value});}
 const visible=selector=>js('const e=document.querySelector(arguments[0]);return !!e && !!(e.offsetWidth || e.offsetHeight || e.getClientRects().length);',selector);
 const test=async(name,fn)=>{await fn();console.log('PASS '+name)};
-const action=(name)=>click(`[data-m2="${name}"]`);
+async function action(name) {
+  const selector = `[data-m2="${name}"]`;
+  await waitFor(() => visible(selector));
+  await click(selector);
+}
 const selectTab=(target)=>click(`#m2-appnav [data-m2="nav"][data-target="${target}"]`);
 const mainText=()=>js('return document.querySelector("#m2-main").innerText');
 const getState=()=>js('return JSON.parse(localStorage.getItem("lab-an-toan-so:exercise:level2"))');
@@ -40,7 +44,10 @@ async function fresh(){await nav('practice.html');
   await js('localStorage.clear()');
   await nav('level2.html');
   await action('start');
-  await click('#m2-main [data-m2="nav"][data-target="chat"]');}
+  const notification = '#m2-main [data-m2="nav"][data-target="chat"]';
+  await waitFor(() => visible(notification));
+  await click(notification);
+}
 (async()=>{
  port=await availablePort();
  prefix=`http://127.0.0.1:${port}`;
@@ -63,6 +70,37 @@ async function fresh(){await nav('practice.html');
   await js('const e=document.querySelector("#exercise-category");e.value="Chat/Call App";e.dispatchEvent(new Event("change",{bubbles:true}))');
   assert.equal(await js('return [...document.querySelectorAll(".practice-card")].filter(e=>!e.hidden).length'),1)
  });
+ await test('Chat nhận từng tin theo đúng thứ tự và giữ lịch sử qua tải lại', async () => {
+  await fresh();
+  const log = '[data-m2-message-log]';
+  const messages = () => js('return [...document.querySelectorAll(arguments[0] + " .m2-bubble")].map(e => e.textContent)', log);
+  assert.deepEqual(await messages(), []);
+  assert.ok(await visible('.m2-typing'));
+  await waitFor(async () => (await messages()).length === 1);
+  assert.match((await messages())[0], /200k cọc loa/);
+  assert.equal(await visible('[data-m2="wallet"]'), false);
+  await selectTab('wallet');
+  assert.equal(await visible('[data-m2="confirm"]'), false);
+  await selectTab('chat');
+  await waitFor(async () => (await messages()).length === 2);
+  assert.match((await messages())[1], /NGUYEN VAN NAM/);
+  await action('ask-quote');
+  assert.equal((await messages()).length, 3);
+  assert.match((await messages())[2], /gửi biên nhận/);
+  assert.equal(await visible('[data-m2="quote"]'), false);
+  await selectTab('group');
+  await selectTab('chat');
+  await waitFor(() => visible('[data-m2="quote"]'));
+  await action('ask-song');
+  await waitFor(async () => (await messages()).length === 6);
+  const conversation = await messages();
+  assert.match(conversation[3], /Xem ảnh Minh gửi/);
+  assert.match(conversation[4], /M đang tập bài gì/);
+  assert.match(conversation[5], /Nắng sân trường/);
+  await command('POST','/refresh',{});
+  assert.deepEqual(await messages(), conversation);
+  assert.equal(await visible('.m2-typing'), false);
+ });
  await test('Chưa tiết lộ đáp án và phân biệt hai cuộc gọi',async()=>{
   await fresh();
   assert.doesNotMatch(await mainText(),/bị chiếm|lừa đảo|giả mạo/i);
@@ -71,6 +109,7 @@ async function fresh(){await nav('practice.html');
   assert.equal((await getState()).verifiedMinh,false);
   await action('contacts');
   await action('call');
+  await waitFor(() => visible('[data-m2="minh-report"]'));
   assert.match(await mainText(),/Đâu có/);
   assert.equal((await getState()).verifiedMinh,true)
  });
@@ -92,6 +131,7 @@ async function fresh(){await nav('practice.html');
   await fresh();
   await selectTab('contacts');
   await action('call');
+  await waitFor(() => visible('[data-m2="minh-report"]'));
   assert.match(await mainText(),/Đâu có/);
   await action('minh-report');
   assert.match(await mainText(),/500\.000/);
@@ -113,6 +153,7 @@ async function fresh(){await nav('practice.html');
  await test('Nhánh C: từ chối và nhận loa',async()=>{
   await fresh();
   await action('decline');
+  await action('continue-decline');
   await action('decline-self');
   assert.match(await mainText(),/500\.000/);
   assert.equal((await getState()).status,'completed')
@@ -131,6 +172,10 @@ async function fresh(){await nav('practice.html');
   await action('transfer');
   assert.equal((await getState()).transferred,true);
   assert.match(await mainText(),/300\.000/);
+  assert.doesNotMatch(await mainText(),/Bên kia bảo chưa thấy tiền/);
+  await waitFor(async () => /Tớ gửi lại biên nhận/.test(await mainText()));
+  assert.doesNotMatch(await mainText(),/Bên kia bảo chưa thấy tiền/);
+  await waitFor(async () => /Bên kia bảo chưa thấy tiền/.test(await mainText()));
   await action('history');
   assert.equal(await js('return document.querySelector("#m2-transaction-code").value'),'MO-PHONG-1126');
   await action('copy-tx');
@@ -140,7 +185,8 @@ async function fresh(){await nav('practice.html');
   assert.match(await mainText(),/Đã gửi yêu cầu hỗ trợ/);
   await action('after-transfer');
   await action('warn-group');
-  assert.match(await mainText(),/hủy một giao dịch/);
+  assert.doesNotMatch(await mainText(), /đã hủy giao dịch/);
+  await waitFor(async () => /đã hủy giao dịch/.test(await mainText()));
   await action('finish-transfer');
   assert.equal((await getState()).status,'completed');
   assert.match(await mainText(),/300\.000/)
@@ -157,6 +203,7 @@ async function fresh(){await nav('practice.html');
  await test('Hoàn thành lại để kiểm tra chơi lại',async()=>{
   await fresh();
   await action('decline');
+  await action('continue-decline');
   await action('decline-self');
   assert.equal((await getState()).status,'completed')
  });
@@ -226,6 +273,7 @@ async function fresh(){await nav('practice.html');
   await fresh();
   await selectTab('contacts');
   await action('call');
+  await waitFor(() => visible('[data-m2="minh-report"]'));
   await selectTab('group');
   await action('warn-group');
   assert.equal((await getState()).groupWarned,true);
@@ -238,7 +286,7 @@ async function fresh(){await nav('practice.html');
   assert.equal(await js('return !!document.querySelector("[data-m2=finish-transfer]")'),false);
   await action('warn-group');
   assert.equal((await getState()).warnedAfterTransfer,true);
-  assert.match(await mainText(),/hủy một giao dịch/);
+  await waitFor(async () => /đã hủy giao dịch/.test(await mainText()));
   await action('finish-transfer');
   assert.match(await mainText(),/Chặn lần chuyển thứ hai/)
  });
@@ -261,6 +309,7 @@ async function fresh(){await nav('practice.html');
  });
  await test('Điện thoại trong các màn trò chơi',async()=>{
   await fresh();
+  await waitFor(() => visible('[data-m2="wallet"]'));
   for(const tab of ['chat','group','wallet']){await selectTab(tab);
   let d=await js('return {width:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}');
   assert.ok(d.scroll<=d.width,`${tab}: ${JSON.stringify(d)}`)}await action('confirm');
