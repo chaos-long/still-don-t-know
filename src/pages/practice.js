@@ -79,6 +79,7 @@ export default {
             <option value="Others">Others</option>
           </select>
         </div>
+        <a class="workspace-link creator-link" href="creator.html">Tạo màn chơi</a>
         <a class="workspace-link" href="workspace.html"><span aria-hidden="true">▣</span> Workspace</a>
       </div>
       <div class="practice-list-heading"><div><p class="eyebrow">KHÁM PHÁ CÁC TÌNH HUỐNG</p><h2 id="exercises-heading">Bài thực hành</h2></div><p>Chọn một chủ đề để bắt đầu.</p></div>

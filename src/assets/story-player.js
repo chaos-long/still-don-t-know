@@ -1,7 +1,10 @@
-(() => {
-  const root = document.querySelector('#story-app');
-  const story = window.storyScenario;
-  if (!root || !story) return;
+window.mountStoryPlayer = (root, story, options = {}) => {
+  const events = new AbortController();
+  const { signal } = events;
+  const { inline = false, snapshot = false, saveProgress = true, onExit } = options;
+  const exitHref = options.exitHref || 'practice.html';
+  root.classList.add('sp-player');
+  root.classList.toggle('sp-inline', inline);
 
   const key = `lab-an-toan-so:story:${story.id}`;
   const themeNames = {background: '--sp-bg', incoming: '--sp-in', outgoing: '--sp-out', text: '--sp-text', action: '--sp-action', accent: '--sp-accent'};
@@ -10,20 +13,41 @@
   });
   const esc = value => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
   const section = () => story.sections[state.sectionIndex];
-  const initial = () => ({version: 1, sectionIndex: 0, eventIndex: 0, phase: 'playing', activeChat: story.startChat, view: 'chat', unlocked: [story.startChat], history: Object.fromEntries(Object.keys(story.chats).map(id => [id, []])), read: {}, completed: [], scroll: {}, ending: null});
+  const initial = () => ({
+    version: 1, sectionIndex: story.startSection ?? 0, eventIndex: 0, phase: 'playing',
+    activeChat: story.startChat, view: 'chat', unlocked: [story.startChat],
+    revision: story.revision, history: Object.fromEntries(Object.keys(story.chats).map(id => [id, []])),
+    read: {}, completed: [], scroll: {}, ending: null, visit: 0,
+  });
   let state;
   let timer = 0;
   let modal = null;
   let storageAvailable = true;
   let busy = false;
+  let busyTimer = 0;
+  const images = new Map(story.sections.flatMap(entry => entry.events)
+    .filter(event => event.src || event.image).map(event => [event.id, event]));
 
   try {
-    const saved = JSON.parse(localStorage.getItem(key) || 'null');
-    state = saved && saved.version === 1 && Number.isInteger(saved.sectionIndex) && saved.sectionIndex >= 0 && saved.sectionIndex < story.sections.length && story.chats[saved.activeChat] && Array.isArray(saved.unlocked) && saved.history && Array.isArray(saved.completed) ? saved : initial();
+    const saved = saveProgress ? JSON.parse(localStorage.getItem(key) || 'null') : null;
+    state = saved && saved.version === 1 && saved.revision === story.revision && Number.isInteger(saved.sectionIndex) && saved.sectionIndex >= 0 && saved.sectionIndex < story.sections.length && story.chats[saved.activeChat] && Array.isArray(saved.unlocked) && saved.history && Array.isArray(saved.completed) ? saved : initial();
+    if (story.authored && saved === state) {
+      for (const item of Object.values(state.history).flat()) {
+        const original = images.get(item.id);
+        if (original?.src) item.src = original.src;
+        if (original?.image) item.image = original.image;
+      }
+    }
   } catch { state = initial(); storageAvailable = false; }
-  const save = () => { try { localStorage.setItem(key, JSON.stringify(state)); } catch { storageAvailable = false; } };
+  const save = () => {
+    if (!saveProgress) return;
+    try {
+      localStorage.setItem(key, JSON.stringify(state, (property, value) =>
+        story.authored && ['src', 'image'].includes(property) ? undefined : value));
+    } catch { storageAvailable = false; }
+  };
   const avatar = (label, color, extra = '') => {
-    if (label && (label.includes('/') || label.endsWith('.svg') || label.endsWith('.png') || label.endsWith('.jpg'))) {
+    if (label && (/^(assets\/|data:image\/)/.test(label) || /\.(svg|png|jpg)$/.test(label))) {
       return `<img src="${esc(label)}" class="sp-avatar ${extra}" style="--avatar:${esc(color || '#e4e4e4')}" alt="" aria-hidden="true">`;
     }
     return `<span class="sp-avatar ${extra}" style="--avatar:${esc(color || '#e4e4e4')}" aria-hidden="true">${esc(label || '•')}</span>`;
@@ -33,7 +57,7 @@
   const eventPreview = item => item.type === 'image' ? 'Đã gửi một ảnh' : item.type === 'card' ? item.title : item.text || '';
   const lastItem = id => contentItems(id).at(-1);
   const unread = id => Math.max(0, contentItems(id).length - (state.read[id] || 0));
-  const isMobile = () => matchMedia('(max-width: 760px)').matches;
+  const isMobile = () => !inline && matchMedia('(max-width: 760px)').matches;
   const chatVisible = () => !isMobile() || state.view === 'chat';
   const sectionTargetOpen = () => state.activeChat === section().chat && chatVisible();
 
@@ -44,17 +68,24 @@
   function markRead(id) { state.read[id] = contentItems(id).length; }
   function addMarker() {
     const target = section().chat;
-    const id = `${section().id}:marker`;
-    if (!chatItems(target).some(item => item.id === id)) state.history[target].push({id, type: 'marker', text: section().label});
+    const id = `${section().id}:marker${story.authored ? `:${state.visit}` : ''}`;
+    if (section().label && !chatItems(target).some(item => item.id === id)) {
+      state.history[target].push({id, type: 'marker', text: section().label});
+    }
   }
   addMarker();
+  if (snapshot) {
+    state.history[section().chat].push(...section().events.filter(event => event.type !== 'choice'));
+    state.eventIndex = section().events.length;
+    state.phase = 'ready';
+  }
 
   function renderMessage(item, previous, next, chat) {
     if (item.type === 'marker') return `<div class="sp-time-label">${esc(item.text)}</div>`;
     const mine = item.sender === story.playerId;
     const grouped = previous && previous.type !== 'marker' && previous.sender === item.sender && !['choice'].includes(previous.type);
     const sender = story.people[item.sender] || {name: item.sender, avatar: '?'};
-    const groupName = !mine && chat.members.length > 2 && !grouped ? `<span class="sp-sender">${esc(sender.name)}</span>` : '';
+    const groupName = !mine && (chat.group || chat.members.length > 2) && !grouped ? `<span class="sp-sender">${esc(sender.name)}</span>` : '';
     const isEndOfSentCluster = mine && (!next || next.type === 'marker' || next.sender !== item.sender);
     const showRead = isEndOfSentCluster && Boolean(item.read);
     let body = '';
@@ -65,6 +96,8 @@
   }
 
   function actionContent() {
+    if (snapshot) return '<span class="sp-tray-hint">Bản xem trước</span>';
+    if (inline && state.phase === 'ready') return '<span class="sp-tray-hint">Đã phát hết cảnh</span>';
     if (state.ending) return `<div class="sp-end"><strong>${esc(story.endings[state.ending].title)}</strong><p>${esc(story.endings[state.ending].body)}</p><button type="button" data-sp="restart">${esc(story.endings[state.ending].action || 'Chơi lại')}</button></div>`;
     if (state.phase === 'switch') {
       const target = story.chats[section().chat];
@@ -86,6 +119,7 @@
   }
 
   function render() {
+    const activeControl = root.contains(document.activeElement) ? document.activeElement : null;
     const oldPane = root.querySelector('.sp-history');
     const wasBottom = oldPane ? oldPane.scrollHeight - oldPane.scrollTop - oldPane.clientHeight < 70 : true;
     const oldChat = oldPane?.dataset.chat;
@@ -95,21 +129,31 @@
     const list = state.unlocked.map(id => {
       const item = lastItem(id);
       const info = story.chats[id];
-      const count = unread(id);
-      return `<button type="button" class="sp-row ${id === state.activeChat ? 'active' : ''} ${count ? 'unread' : ''}" data-sp="open" data-chat="${esc(id)}" ${id === state.activeChat ? 'aria-current="true"' : ''}>${avatar(info.avatar, info.color)}<span class="sp-row-copy"><strong>${esc(info.title)}</strong><small>${esc(item ? eventPreview(item) : 'Chưa có tin nhắn')}</small></span><span class="sp-row-tail"><time>${esc(item?.time || '')}</time>${count ? `<span class="sp-badge" aria-label="${count} tin chưa đọc">${count}</span>` : ''}</span></button>`;
+      const pending = story.authored && state.phase === 'switch' && id === section().chat;
+      const count = Math.max(unread(id), pending ? 1 : 0);
+      const summary = pending ? 'Có tin nhắn mới' : item ? eventPreview(item) : 'Chưa có tin nhắn';
+      return `<button type="button" class="sp-row ${id === state.activeChat ? 'active' : ''} ${count ? 'unread' : ''}" data-sp="open" data-chat="${esc(id)}" ${id === state.activeChat ? 'aria-current="true"' : ''}>${avatar(info.avatar, info.color)}<span class="sp-row-copy"><strong>${esc(info.title)}</strong><small>${esc(summary)}</small></span><span class="sp-row-tail"><time>${esc(item?.time || '')}</time>${count ? `<span class="sp-badge" aria-label="${count} tin chưa đọc">${count}</span>` : ''}</span></button>`;
     }).join('');
     const note = storageAvailable ? '' : '<p class="sp-storage">Trình duyệt không lưu được tiến độ. Bạn vẫn có thể chơi trong phiên này.</p>';
     const nextEvent = section()?.events[state.eventIndex];
     const showTyping = state.phase === 'playing' && sectionTargetOpen() && nextEvent && nextEvent.sender !== story.playerId && nextEvent.typing !== false;
     root.innerHTML = `<div class="sp-shell" data-view="${esc(state.view)}">
-      <aside class="sp-inbox"><div class="sp-inbox-heading"><div><h1>Tin nhắn</h1><p>${esc(story.title)}</p></div><a href="practice.html" aria-label="Thoát truyện, về Thực hành">Thoát</a></div><div class="sp-rows">${list}</div></aside>
-      <section class="sp-conversation" aria-label="Cuộc trò chuyện ${esc(chat.title)}"><header class="sp-header"><button type="button" class="sp-back" data-sp="back" aria-label="Về danh sách tin nhắn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg></button>${avatar(chat.avatar, chat.color)}<div class="sp-header-copy"><strong>${esc(chat.title)}</strong>${chat.status || chat.members.length > 2 ? `<small>${esc(chat.status || `${chat.members.length} thành viên`)}</small>` : ''}</div><a class="sp-exit" href="practice.html">Thoát</a></header>
+      <aside class="sp-inbox"><div class="sp-inbox-heading"><div><h1>Tin nhắn</h1><p>${esc(story.title)}</p></div><a data-sp="exit" href="${esc(exitHref)}">Thoát</a></div><div class="sp-rows">${list}</div></aside>
+      <section class="sp-conversation" aria-label="Cuộc trò chuyện ${esc(chat.title)}"><header class="sp-header"><button type="button" class="sp-back" data-sp="back" aria-label="Về danh sách tin nhắn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg></button>${avatar(chat.avatar, chat.color)}<div class="sp-header-copy"><strong>${esc(chat.title)}</strong>${chat.status || (chat.group || chat.members.length > 2) ? `<small>${esc(chat.status || `${chat.members.length} thành viên`)}</small>` : ''}</div><a class="sp-exit" data-sp="exit" href="${esc(exitHref)}">Thoát</a></header>
         <div class="sp-history" data-chat="${esc(state.activeChat)}" tabindex="0" role="log" aria-label="Lịch sử tin nhắn ${esc(chat.title)}">${items.map((item, index) => renderMessage(item, items[index - 1], items[index + 1], chat)).join('')}<div class="sp-typing" ${showTyping ? '' : 'hidden'} aria-label="Đang nhập"><span></span><span></span><span></span></div></div>
         <div class="sp-action-tray">${actionContent()}${note}</div></section>
     </div><dialog class="sp-dialog" aria-label="Nội dung đính kèm"></dialog>`;
     const pane = root.querySelector('.sp-history');
     pane.scrollTop = oldChat === state.activeChat && !wasBottom ? (state.scroll[state.activeChat] || 0) : pane.scrollHeight;
-    if (modal) showModal();
+    if (modal) {
+      showModal();
+    } else if (activeControl) {
+      const {sp, id, chat: controlChat, option} = activeControl.dataset;
+      const replacement = sp && [...root.querySelectorAll('[data-sp]')].find(control =>
+        control.dataset.sp === sp && control.dataset.id === id &&
+        control.dataset.chat === controlChat && control.dataset.option === option && control.getClientRects().length);
+      (replacement || pane).focus({preventScroll: true});
+    }
   }
 
   function settle() {
@@ -117,6 +161,10 @@
     if (current.events[state.eventIndex]?.type === 'choice') state.phase = 'choice';
     else if (state.eventIndex < current.events.length) state.phase = 'playing';
     else if (current.events.some(event => event.type === 'card' && event.required && !state.completed.includes(event.id))) state.phase = 'waiting';
+    else if (current.ending) {
+      state.ending = current.ending;
+      state.phase = 'finished';
+    }
     else state.phase = 'ready';
   }
   function deliver(event) {
@@ -144,7 +192,7 @@
     if (modal.kind === 'image') element.innerHTML = `<div class="sp-modal-content"><button type="button" data-sp="close" class="sp-close" aria-label="Đóng ảnh">×</button><img src="${esc(modal.event.src)}" alt="${esc(modal.event.alt)}"></div>`;
     else element.innerHTML = `<div class="sp-modal-content"><button type="button" data-sp="close" class="sp-close" aria-label="Đóng nội dung">×</button><h2>${esc(modal.event.action.title)}</h2><p>${esc(modal.event.action.body)}</p>${modal.event.image ? `<img src="${esc(modal.event.image)}" alt="">` : ''}<button type="button" data-sp="close" class="sp-modal-done">Đã xem</button></div>`;
     element.showModal();
-    element.addEventListener('close', () => { if (modal) { modal = null; update(); } }, {once: true});
+    element.addEventListener('close', () => { if (modal) { modal = null; update(); } }, {once: true, signal});
   }
   function openChat(id) {
     if (!state.unlocked.includes(id)) return;
@@ -155,26 +203,31 @@
     if (state.phase === 'switch' && id === section().chat) state.phase = 'playing';
     save(); update();
   }
+  function goTo(index) {
+    if (index < 0 || index >= story.sections.length) return;
+    state.sectionIndex = index;
+    state.visit = (state.visit || 0) + 1;
+    state.eventIndex = 0;
+    const target = section().chat;
+    addMarker();
+    if (target !== state.activeChat) {
+      if (!state.unlocked.includes(target)) state.unlocked.push(target);
+      const first = section().events[0];
+      if (!story.authored && first && first.type !== 'choice') {
+        state.history[target].push({...first});
+        state.eventIndex = 1;
+      }
+      state.phase = 'switch';
+    } else settle();
+    save(); update();
+  }
   function continueStory() {
-    if (busy || state.phase !== 'ready' || state.sectionIndex >= story.sections.length - 1) return;
+    if (busy || state.phase !== 'ready' || inline) return;
     busy = true;
     try {
-      state.sectionIndex++;
-      state.eventIndex = 0;
-      const target = section().chat;
-      addMarker();
-      if (target !== state.activeChat) {
-        if (!state.unlocked.includes(target)) state.unlocked.push(target);
-        const first = section().events[0];
-        if (first && first.type !== 'choice') {
-          state.history[target].push({...first});
-          state.eventIndex = 1;
-        }
-        state.phase = 'switch';
-      } else settle();
-      save(); update();
+      goTo(state.sectionIndex + 1);
     } finally {
-      setTimeout(() => { busy = false; }, 80);
+      busyTimer = setTimeout(() => { busy = false; }, 80);
     }
   }
 
@@ -182,19 +235,26 @@
     const control = event.target.closest('[data-sp]');
     if (!control) return;
     const action = control.dataset.sp;
+    if (action === 'exit' && onExit) { event.preventDefault(); onExit(); return; }
     if (action === 'open') { openChat(control.dataset.chat); return; }
     if (action === 'back') { rememberScroll(); state.view = 'list'; save(); update(); return; }
     if (action === 'continue') { continueStory(); return; }
     if (action === 'restart') { clearTimeout(timer); modal = null; state = initial(); addMarker(); save(); update(); return; }
     if (action === 'close') { root.querySelector('.sp-dialog').close(); return; }
-    if (action === 'choose' && state.phase === 'choice') {
+    if (action === 'choose' && state.phase === 'choice' && sectionTargetOpen()) {
       const choice = section().events[state.eventIndex];
       const option = choice.options.find(item => item.id === control.dataset.option);
-      if (!option || !story.endings[option.ending]) return;
-      state.history[section().chat].push({id: choice.id, type: 'message', sender: story.playerId, text: option.label, time: ''});
+      if (!option || (!option.target && !story.endings[option.ending])) return;
+      if (option.send !== false) {
+        state.history[section().chat].push({id: choice.id, type: 'message', sender: story.playerId, text: option.label, time: choice.time || ''});
+      }
+      markRead(section().chat);
+      if (option.target) {
+        goTo(story.sections.findIndex(entry => entry.id === option.target));
+        return;
+      }
       state.ending = option.ending;
       state.phase = 'finished';
-      markRead(section().chat);
       save(); update(); return;
     }
     if (action === 'image' || action === 'card') {
@@ -202,13 +262,29 @@
       if (!item) return;
       clearTimeout(timer);
       modal = {kind: action, event: item};
-      if (action === 'card' && !state.completed.includes(item.id)) { state.completed.push(item.id); settle(); save(); }
+      if (!inline && action === 'card' && !state.completed.includes(item.id)) {
+        state.completed.push(item.id);
+        if (state.phase === 'waiting' && section().events.some(event => event.id === item.id)) settle();
+        save();
+      }
       showModal();
     }
-  });
-  root.addEventListener('scroll', event => { if (event.target.matches('.sp-history')) state.scroll[state.activeChat] = event.target.scrollTop; }, true);
-  window.addEventListener('resize', () => { if (!modal) update(); });
-  window.addEventListener('beforeunload', () => clearTimeout(timer));
-  window.addEventListener('pagehide', () => clearTimeout(timer));
+  }, {signal});
+  root.addEventListener('scroll', event => { if (event.target.matches('.sp-history')) state.scroll[state.activeChat] = event.target.scrollTop; }, {capture: true, signal});
+  if (!inline) window.addEventListener('resize', () => { if (!modal) update(); }, {signal});
+  window.addEventListener('pagehide', () => clearTimeout(timer), {signal});
+  window.addEventListener('pageshow', update, {signal});
   render(); schedule();
+  return () => {
+    clearTimeout(timer);
+    clearTimeout(busyTimer);
+    events.abort();
+    root.querySelector('dialog[open]')?.close();
+    root.replaceChildren();
+  };
+};
+
+(() => {
+  const root = document.querySelector('#story-app');
+  if (root && window.storyScenario) window.mountStoryPlayer(root, window.storyScenario);
 })();

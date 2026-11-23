@@ -12,6 +12,12 @@ npm run dev
 
 Mở địa chỉ được in trong terminal (mặc định `http://127.0.0.1:4173`). Để tạo bản tĩnh riêng, chạy `npm run build`; kết quả nằm trong `dist/` và có thể đưa lên bất kỳ máy chủ tĩnh nào.
 
+## Tạo màn chơi
+
+Từ **Thực hành → Tạo màn chơi**, mở **Màn của tôi** rồi chọn **Tạo màn mới**. Dùng **Nhân vật** và **Cuộc trò chuyện** để chuẩn bị dàn nhân vật, sau đó soạn các cảnh, tin nhắn và đường đi trong mục **Sau cảnh này**. Bản nháp tự lưu trên trình duyệt và thiết bị đang dùng.
+
+**Phát thử cảnh** xem nhịp phát tin của cảnh đang soạn. **Chơi thử từ đầu** dùng cùng trình phát với nút **Chơi** trong thư viện và giữ riêng tiến độ chơi thật. Để gửi màn cho người khác, chọn **Xuất màn** và gửi file `.lab.json` có kèm ảnh. Người nhận mở **Thực hành → Tạo màn chơi → Nhập màn**, chọn file rồi bấm **Chơi**.
+
 ## Kiểm thử trình duyệt
 
 Cài Chromium hoặc Chrome và ChromeDriver tương thích, rồi bảo đảm `chromedriver` có trong `PATH`. Chạy:
@@ -21,6 +27,8 @@ npm run test:browser
 ```
 
 Kiểm thử tự build website và dùng một hồ sơ trình duyệt tạm, không động đến dữ liệu trình duyệt cá nhân. Có thể đặt `CHROMEDRIVER` là đường dẫn tới ChromeDriver hoặc `CHROME_BINARY` là đường dẫn tới Chromium/Chrome. Trong môi trường Linux không hỗ trợ Chrome sandbox, có thể chạy `CHROME_NO_SANDBOX=1 npm run test:browser`.
+
+Chạy riêng luồng soạn, chơi thử và xuất–nhập bằng `npm run test:creator`.
 
 ## Cấu trúc và giới hạn
 

@@ -6,7 +6,8 @@
   "scripts": {
     "build": "node scripts/build.js",
     "dev": "npm run build && node scripts/serve.js",
-    "test:browser": "npm run build && node tests/level2.browser.cjs && node tests/level3.browser.cjs",
+    "test:browser": "npm run build && node tests/level2.browser.cjs && node tests/level3.browser.cjs && node tests/creator.browser.cjs",
+    "test:creator": "npm run build && node tests/creator.browser.cjs",
     "test:level3": "npm run build && node tests/level3.browser.cjs"
   },
   "engines": {

@@ -20,3 +20,5 @@
 .results-message{margin:0;color:#405d69}.results-message:not(:empty){padding:22px;border:1px solid #dce6e9;border-radius:10px;background:#fff;margin-bottom:16px}.practice-footnote{margin:24px 0 90px;color:#596d7c;font-size:14px}
 @media(max-width:800px){.practice-toolbar{flex-wrap:wrap}.practice-search-field{flex-basis:100%}.practice-category-field{flex:1}.practice-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.practice-toolbar{padding:16px}.practice-category-field{flex-basis:100%}.workspace-link{width:100%}.practice-list-heading{display:block;margin-top:38px}.practice-list-heading>p{margin-top:7px}.practice-cards{grid-template-columns:1fr}.practice-card{min-height:0}.practice-footnote{margin-bottom:65px}}
+.creator-link{background:#68d992;color:#12372a}
+.creator-link:hover{background:#85e4a9}
