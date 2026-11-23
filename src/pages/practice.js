@@ -16,6 +16,14 @@ const exercises = [
     href: 'level2.html',
   },
   {
+    icon: '✉',
+    category: 'Chat/Call App',
+    title: 'Góc khuất khung hình',
+    description: 'Xử lý tình huống bị đe dọa tống tiền bằng video deepfake cắt ghép khi cận kề deadline.',
+    duration: '5–8 phút',
+    href: 'level3.html',
+  },
+  {
     icon: '◌',
     category: 'Chat/Call App',
     title: 'Trước giờ tổng duyệt',

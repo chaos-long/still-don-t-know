@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 320" role="img" aria-label="Ảnh chụp màn hình danh sách bạn bè công khai kẻ gian gửi để đe dọa">
+  <rect width="460" height="320" rx="12" fill="#1c242c"/>
+  <rect x="14" y="14" width="432" height="42" rx="8" fill="#25303a"/>
+  <text x="28" y="38" fill="#ffffff" font-family="-apple-system,sans-serif" font-size="14" font-weight="700">Bạn bè (Công khai) · 452 người bạn</text>
+  <text x="28" y="50" fill="#8da0b0" font-family="-apple-system,sans-serif" font-size="10">Ai cũng có thể nhìn thấy danh sách này</text>
+
+  <!-- Danh sách 6 bạn bè -->
+  <g transform="translate(18, 70)">
+    <!-- Khánh -->
+    <rect x="0" y="0" width="205" height="64" rx="8" fill="#28343f"/>
+    <circle cx="28" cy="32" r="18" fill="#3b7a57"/>
+    <text x="28" y="37" text-anchor="middle" fill="#fff" font-family="-apple-system,sans-serif" font-size="14" font-weight="700">K</text>
+    <text x="56" y="27" fill="#fff" font-family="-apple-system,sans-serif" font-size="13" font-weight="700">Quốc Khánh</text>
+    <text x="56" y="44" fill="#8da0b0" font-family="-apple-system,sans-serif" font-size="11">Bạn thân · Cùng lớp</text>
+    <circle cx="188" cy="32" r="8" fill="#c93838"/>
+    <text x="188" y="36" text-anchor="middle" fill="#fff" font-size="10">!</text>
+
+    <!-- Bạn 2 -->
+    <rect x="215" y="0" width="205" height="64" rx="8" fill="#28343f"/>
+    <circle cx="243" cy="32" r="18" fill="#4d5382"/>
+    <text x="243" y="37" text-anchor="middle" fill="#fff" font-family="-apple-system,sans-serif" font-size="14" font-weight="700">N</text>
+    <text x="271" y="27" fill="#fff" font-family="-apple-system,sans-serif" font-size="13" font-weight="700">Ngọc Ánh</text>
+    <text x="271" y="44" fill="#8da0b0" font-family="-apple-system,sans-serif" font-size="11">Nhóm thuyết trình</text>
+
+    <!-- Bạn 3 -->
+    <rect x="0" y="74" width="205" height="64" rx="8" fill="#28343f"/>
+    <circle cx="28" cy="106" r="18" fill="#995d3f"/>
+    <text x="28" y="111" text-anchor="middle" fill="#fff" font-family="-apple-system,sans-serif" font-size="14" font-weight="700">T</text>
+    <text x="56" y="101" fill="#fff" font-family="-apple-system,sans-serif" font-size="13" font-weight="700">Tuấn Minh</text>
+    <text x="56" y="118" fill="#8da0b0" font-family="-apple-system,sans-serif" font-size="11">Lớp 11A2</text>
+
+    <!-- Bạn 4 -->
+    <rect x="215" y="74" width="205" height="64" rx="8" fill="#28343f"/>
+    <circle cx="243" cy="106" r="18" fill="#3f7588"/>
+    <text x="243" y="111" text-anchor="middle" fill="#fff" font-family="-apple-system,sans-serif" font-size="14" font-weight="700">L</text>
+    <text x="271" y="101" fill="#fff" font-family="-apple-system,sans-serif" font-size="13" font-weight="700">Lê Hoàng</text>
+    <text x="271" y="118" fill="#8da0b0" font-family="-apple-system,sans-serif" font-size="11">CLB Truyền thông</text>
+
+    <!-- Bạn 5 -->
+    <rect x="0" y="148" width="205" height="64" rx="8" fill="#28343f"/>
+    <circle cx="28" cy="180" r="18" fill="#7a4269"/>
+    <text x="28" y="185" text-anchor="middle" fill="#fff" font-family="-apple-system,sans-serif" font-size="14" font-weight="700">H</text>
+    <text x="56" y="175" fill="#fff" font-family="-apple-system,sans-serif" font-size="13" font-weight="700">Hồng Hạnh</text>
+    <text x="56" y="192" fill="#8da0b0" font-family="-apple-system,sans-serif" font-size="11">Bí thư Chi đoàn</text>
+
+    <!-- Bạn 6 -->
+    <rect x="215" y="148" width="205" height="64" rx="8" fill="#28343f"/>
+    <circle cx="243" cy="180" r="18" fill="#586e3f"/>
+    <text x="243" y="185" text-anchor="middle" fill="#fff" font-family="-apple-system,sans-serif" font-size="14" font-weight="700">V</text>
+    <text x="271" y="175" fill="#fff" font-family="-apple-system,sans-serif" font-size="13" font-weight="700">Thảo Vy</text>
+    <text x="271" y="192" fill="#8da0b0" font-family="-apple-system,sans-serif" font-size="11">Bạn cùng khóa</text>
+  </g>
+  
+  <!-- Banner dưới -->
+  <rect x="14" y="290" width="432" height="20" rx="4" fill="#c93838" opacity="0.8"/>
+  <text x="230" y="304" text-anchor="middle" fill="#fff" font-family="-apple-system,sans-serif" font-size="11" font-weight="700">DANH SÁCH ĐƯỢC CHỤP TRỰC TIẾP TỪ TƯỜNG CÔNG KHAI CỦA BẠN</text>
+</svg>

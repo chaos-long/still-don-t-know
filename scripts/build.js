@@ -6,15 +6,16 @@ import knowledge from '../src/pages/knowledge.js';
 import exercise from '../src/pages/exercise.js';
 import workspace from '../src/pages/workspace.js';
 import level2 from '../src/pages/level2.js';
+import level3 from '../src/pages/level3.js';
 import story from '../src/pages/story.js';
 
 const navPages = [ ['index.html', home], ['practice.html', practice], ['knowledge.html', knowledge] ];
-const pages = [...navPages, ['exercise.html', exercise], ['level2.html', level2], ['story.html', story], ['workspace.html', workspace]];
+const pages = [...navPages, ['exercise.html', exercise], ['level2.html', level2], ['level3.html', level3], ['story.html', story], ['workspace.html', workspace]];
 const escape = text => text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;');
 await mkdir('dist/assets', { recursive: true });
 await Promise.all((await readdir('src/assets')).map(file => copyFile(`src/assets/${file}`, `dist/assets/${file}`)));
 for (const [file, page] of pages) {
-  const current = ['exercise.html', 'level2.html', 'story.html', 'workspace.html'].includes(file) ? 'practice.html' : file;
+  const current = ['exercise.html', 'level2.html', 'level3.html', 'story.html', 'workspace.html'].includes(file) ? 'practice.html' : file;
   const links = navPages.map(([href, item]) => `<a href="${href}"${href === current ? ' aria-current="page"' : ''}>${item.title}</a>`).join('');
   const pageStyles = (page.styles || []).map(asset => `<link rel="stylesheet" href="assets/${asset}">`).join('');
   const pageScripts = (page.scripts || []).map(asset => `<script src="assets/${asset}" defer></script>`).join('');

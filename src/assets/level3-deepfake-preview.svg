@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 360" role="img" aria-label="Thẻ video bằng chứng đã làm mờ an toàn, phát hiện dấu vết cắt ghép khuôn mặt">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#182026"/>
+      <stop offset="100%" stop-color="#0f1418"/>
+    </linearGradient>
+    <filter id="censorBlur" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  </defs>
+  <!-- Khung phát video -->
+  <rect width="540" height="360" rx="16" fill="url(#bg)"/>
+  
+  <!-- Vùng phòng nền mờ (ánh sáng trắng lạnh) -->
+  <rect x="20" y="20" width="500" height="260" rx="10" fill="#243038" opacity="0.8"/>
+  <circle cx="450" cy="70" r="30" fill="#a4c2db" opacity="0.15"/>
+  
+  <!-- Vùng thân người: ĐƯỢC LÀM MỜ HOÀN TOÀN / PIXELATED ĐẢM BẢO TUYỆT ĐỐI AN TOÀN -->
+  <g filter="url(#censorBlur)">
+    <rect x="160" y="190" width="220" height="110" rx="20" fill="#1b2e4b"/>
+    <ellipse cx="270" cy="240" rx="90" ry="50" fill="#886d63"/>
+  </g>
+  <!-- Nhãn kiểm duyệt nội dung an toàn -->
+  <rect x="180" y="215" width="180" height="28" rx="6" fill="#10171d" opacity="0.9"/>
+  <text x="270" y="234" text-anchor="middle" fill="#9db2c2" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="12" font-weight="700">VÙNG THÂN ĐÃ KIỂM DUYỆT</text>
+
+  <!-- Vùng áo phông xanh đậm (nếp gấp đứng yên phi tự nhiên) -->
+  <path d="M220 180 Q270 205 320 180 L340 220 L200 220 Z" fill="#182e46" stroke="#254261" stroke-width="2"/>
+  
+  <!-- Vùng mặt ghép lỗi (Ánh sáng vàng đèn bàn bất đối xứng, viền cằm nhòe) -->
+  <g id="face-zone">
+    <!-- Viền ghép lỗi quanh cổ -->
+    <ellipse cx="270" cy="140" rx="54" ry="62" fill="none" stroke="#e0a438" stroke-width="2" stroke-dasharray="4 3" opacity="0.7"/>
+    <!-- Khuôn mặt nghiêng -->
+    <ellipse cx="270" cy="138" rx="48" ry="56" fill="#dfb38f"/>
+    <!-- Ánh sáng đèn bàn ngả vàng hắt từ góc trái -->
+    <path d="M228 100 Q245 138 238 180 Q225 140 228 100 Z" fill="#ffcf66" opacity="0.6"/>
+    <!-- Mắt, mũi, miệng tối giản -->
+    <circle cx="254" cy="128" r="3.5" fill="#3a2518"/>
+    <circle cx="286" cy="128" r="3.5" fill="#3a2518"/>
+    <path d="M268 136 L272 148 L265 149" stroke="#9e6d4c" stroke-width="2" fill="none"/>
+    <path d="M258 162 Q270 168 282 162" stroke="#874e3a" stroke-width="2.5" fill="none"/>
+    <!-- Tóc đen ngắn -->
+    <path d="M220 125 Q230 82 270 82 Q315 82 320 120 C310 100 290 96 270 96 C245 96 230 106 220 125 Z" fill="#201b18"/>
+  </g>
+  
+  <!-- Overlay cảnh báo kỹ thuật -->
+  <rect x="20" y="20" width="130" height="26" rx="6" fill="#c93838" opacity="0.9"/>
+  <text x="85" y="37" text-anchor="middle" fill="#fff" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="11" font-weight="700">DẤU VẾT GHÉP MẶT</text>
+
+  <!-- Thanh điều khiển & Metadata -->
+  <rect x="20" y="295" width="500" height="45" rx="8" fill="#1b232a"/>
+  <!-- Nút Play -->
+  <polygon points="40,312 40,328 54,320" fill="#e9c66e"/>
+  <!-- Thanh thời lượng -->
+  <rect x="68" y="316" width="310" height="6" rx="3" fill="#333e48"/>
+  <rect x="68" y="316" width="120" height="6" rx="3" fill="#e9c66e"/>
+  <circle cx="188" cy="319" r="6" fill="#fff"/>
+  <text x="390" y="322" fill="#9db0bf" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="12">0:04 / 0:14</text>
+  <text x="465" y="322" fill="#788b99" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="11">720p · MUTE</text>
+</svg>
