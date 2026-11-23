@@ -250,10 +250,10 @@
     const screen = state.screen;
     const inboxActive = !['lock','result'].includes(screen);
     app.classList.toggle('m2-inbox-active', inboxActive);
-    inboxBar.hidden = !inboxActive;
+    if (inboxBar) inboxBar.hidden = !inboxActive;
     shell.dataset.screen = screen;
     const avatar = conversationAvatars[screen];
-    topbar.innerHTML = `<div class="m2-contact">${avatar ? `<span class="m2-avatar" aria-hidden="true">${avatar[0]}</span>` : ''}<div><strong>${names[screen] || 'Điện thoại'}</strong>${avatar ? `<small>${avatar[1]}</small>` : ''}</div></div><span class="m2-tag">MÔ PHỎNG</span>`;
+    topbar.innerHTML = `<div class="m2-contact">${avatar ? `<span class="sp-avatar m2-avatar" aria-hidden="true">${avatar[0]}</span>` : ''}<div><strong>${names[screen] || 'Điện thoại'}</strong>${avatar ? `<small>${avatar[1]}</small>` : ''}</div></div><a class="sp-exit" href="practice.html" style="color:#4b6662;font-size:13px;text-decoration:none;font-weight:700">Thoát</a>`;
     nav.hidden = !inboxActive;
     app.querySelectorAll('.m2-nav-button').forEach(el => {
       if (el.dataset.target === mainNavFor(screen)) el.setAttribute('aria-current','page');
@@ -410,7 +410,7 @@
     main.scrollTop = 0;
     if (messages.length) playMessages(messages);
     if (screen === 'group') { const thread = main.querySelector('#m2-group-messages'); if (thread) thread.scrollTop = thread.scrollHeight; }
-    if (!storageAvailable) { storageWarning.hidden = false; gameStorageWarning.hidden = false; }
+    if (!storageAvailable) { if (storageWarning) storageWarning.hidden = false; if (gameStorageWarning) gameStorageWarning.hidden = false; }
   }
 
   function resultView() {

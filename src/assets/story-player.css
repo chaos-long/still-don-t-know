@@ -1,7 +1,53 @@
-body:has(#story-app){overflow:hidden;margin:0;padding:0}
-body:has(#story-app) :is(.site-header,.site-footer){display:none}
-body:has(#story-app) #main{min-height:0;padding:0;margin:0}
-#story-app{--sp-bg:#f1f0ec;--sp-in:#ffffff;--sp-out:#fff0b8;--sp-text:#262626;--sp-action:#34383c;--sp-accent:#e9c66e;height:100vh;height:100dvh;color:var(--sp-text);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;background:var(--sp-bg)}
+:root {
+  --sp-bg: #f1f0ec;
+  --sp-in: #ffffff;
+  --sp-out: #fff0b8;
+  --sp-text: #262626;
+  --sp-action: #34383c;
+  --sp-accent: #e9c66e;
+}
+
+body:has(#story-app),
+body:has(#exercise-app.is-active),
+body:has(.m2-inbox-active),
+body:has(.m3-inbox-active) {
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+body:has(#story-app) :is(.site-header, .site-footer),
+body:has(#exercise-app.is-active) :is(.site-header, .site-footer),
+body:has(.m2-inbox-active) :is(.site-header, .site-footer),
+body:has(.m3-inbox-active) :is(.site-header, .site-footer) {
+  display: none;
+}
+
+body:has(#story-app) #main,
+body:has(#exercise-app.is-active) #main,
+body:has(.m2-inbox-active) #main,
+body:has(.m3-inbox-active) #main {
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+}
+
+#story-app,
+#exercise-app.is-active,
+.m2-inbox-active,
+.m3-inbox-active {
+  --sp-bg: #f1f0ec;
+  --sp-in: #ffffff;
+  --sp-out: #fff0b8;
+  --sp-text: #262626;
+  --sp-action: #34383c;
+  --sp-accent: #e9c66e;
+  height: 100vh;
+  height: 100dvh;
+  color: var(--sp-text);
+  font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  background: var(--sp-bg);
+}
 #story-app [hidden]{display:none!important}
 #story-app *{box-sizing:border-box}
 #story-app button{font:inherit;cursor:pointer}
@@ -99,10 +145,11 @@ body:has(#story-app) #main{min-height:0;padding:0;margin:0}
 @media(prefers-reduced-motion:reduce){.sp-message,.sp-typing span{animation:none!important}}
 
 @media(max-width:760px){
-  .sp-shell{display:block;position:relative}
-  .sp-inbox,.sp-conversation{position:absolute;inset:0}
-  .sp-shell[data-view="chat"] .sp-inbox{display:none}
-  .sp-shell[data-view="list"] .sp-conversation{display:none}
+  .sp-shell[data-view]{display:block;position:relative}
+  .sp-shell[data-view] > .sp-inbox,
+  .sp-shell[data-view] > .sp-conversation{position:absolute;inset:0}
+  .sp-shell[data-view="chat"] > .sp-inbox{display:none}
+  .sp-shell[data-view="list"] > .sp-conversation{display:none}
   .sp-back{display:flex}
   .sp-exit{display:none}
   .sp-header{height:58px;min-height:58px;padding:0 12px}

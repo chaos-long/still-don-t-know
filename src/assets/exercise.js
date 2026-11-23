@@ -52,6 +52,8 @@
     intro.hidden = next !== 'not-started';
     completed.hidden = next !== 'completed';
     chat.hidden = !showChat;
+    app.classList.toggle('is-active', showChat);
+    if (showChat) chat.dataset.view = 'chat';
     if (showChat && !storageAvailable) feedback.textContent = 'Trình duyệt không cho phép lưu tiến độ; bạn có thể tiếp tục trong phiên này.';
     if (showChat && focusInput) input.focus();
   }
@@ -76,11 +78,14 @@
 
   function addOutgoing(text) {
     const message = document.createElement('div');
-    message.className = 'chat-message outgoing';
+    message.className = 'sp-message mine chat-message outgoing';
     const bubble = document.createElement('div');
-    bubble.className = 'chat-bubble';
+    bubble.className = 'sp-bubble chat-bubble';
     bubble.textContent = text;
-    message.append(bubble);
+    const time = document.createElement('span');
+    time.className = 'sp-message-time';
+    time.textContent = 'Đã gửi';
+    message.append(bubble, time);
     transcript.append(message);
     transcript.scrollTop = transcript.scrollHeight;
   }
@@ -185,6 +190,10 @@
     chatEnded.hidden = false;
     openDialog('success');
   });
+  const backBtn = chat.querySelector('.sp-back');
+  const chatRow = chat.querySelector('.sp-row');
+  if (backBtn) backBtn.addEventListener('click', () => { chat.dataset.view = 'list'; });
+  if (chatRow) chatRow.addEventListener('click', () => { chat.dataset.view = 'chat'; });
   dialogClose.addEventListener('click', closeDialog);
   dialog.addEventListener('close', () => {
     if (focusAfterDialog && focusAfterDialog.isConnected) focusAfterDialog.focus();

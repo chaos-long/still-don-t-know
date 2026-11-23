@@ -217,7 +217,7 @@
     if (inboxBar) inboxBar.hidden = !inboxActive;
     shell.dataset.screen = screen;
 
-    topbar.innerHTML = `<div style="display:flex;align-items:center;gap:11px"><span class="m3-avatar" aria-hidden="true">${screen === 'chat-khanh' ? 'K' : screen === 'profile' ? 'B' : screen === 'contacts' ? '☏' : screen === 'wallet' ? '₫' : '?'}</span><div><strong style="display:block;font-size:16px">${names[screen] || 'An Toàn Số'}</strong><small style="color:#717575;font-size:12px">${screen === 'chat-khanh' ? 'Đang trực tuyến' : screen === 'chat-scammer' ? 'Tài khoản lạ · Không xác minh' : 'Lab An Toàn Số'}</small></div></div><span class="m3-tag ${screen === 'chat-scammer' ? 'danger' : ''}">${screen === 'chat-scammer' ? 'ĐE DỌA' : 'MÔ PHỎNG'}</span>`;
+    topbar.innerHTML = `<div style="display:flex;align-items:center;gap:11px"><span class="sp-avatar m3-avatar" aria-hidden="true">${screen === 'chat-khanh' ? 'K' : screen === 'profile' ? 'B' : screen === 'contacts' ? '☏' : screen === 'wallet' ? '₫' : '?'}</span><div class="sp-header-copy"><strong style="display:block;font-size:16px">${names[screen] || 'An Toàn Số'}</strong><small style="color:#717575;font-size:12px">${screen === 'chat-khanh' ? 'Đang trực tuyến' : screen === 'chat-scammer' ? 'Tài khoản lạ · Không xác minh' : 'Lab An Toàn Số'}</small></div></div><a class="sp-exit" href="practice.html" style="color:#4b6662;font-size:13px;text-decoration:none;font-weight:700">Thoát</a>`;
 
     nav.hidden = !inboxActive;
     app.querySelectorAll('.m3-nav-button').forEach(el => {
