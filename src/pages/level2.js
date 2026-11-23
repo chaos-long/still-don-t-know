@@ -1,7 +1,7 @@
 export default {
   title: 'Tao đây, Minh đây',
   description: 'Thực hành đối chiếu một lời nhờ chuyển tiền từ tài khoản bạn bè.',
-  scripts: ['level2.js'],
+  scripts: ['level2-data.js', 'level2.js'],
   styles: ['level2.css'],
   content: `
     <div class="m2-page wrap" id="level2-app">
