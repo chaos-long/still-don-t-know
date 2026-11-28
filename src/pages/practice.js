@@ -1,3 +1,5 @@
+import loseMoney from './losemoneylosein4.js';
+
 // Nội dung được tách thành dữ liệu để bổ sung bài thực hành về sau.
 const exercises = [
   {
@@ -30,6 +32,13 @@ const exercises = [
     description: 'Một truyện tin nhắn tương tác: theo dõi nhiều cuộc chat và kiểm tra thông tin trước khi quyết định.',
     duration: '4–6 phút',
     href: 'story.html',
+  },
+  {
+    icon: '✉',
+    category: 'Chat/Call App',
+    title: loseMoney.title,
+    description: loseMoney.description,
+    href: 'losemoneylosein4.html',
   },
   {
     icon: '✉',
